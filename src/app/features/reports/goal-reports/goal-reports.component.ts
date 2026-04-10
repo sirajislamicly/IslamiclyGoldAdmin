@@ -11,6 +11,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, DataTableComponent, ExportButtonComponent, KpiCardComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Goal Reports</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Goal analytics, type breakdown, and progress tracking</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Goals" [value]="formatNum(totalGoals)" delta="+12%" icon="G" iconBgClass="bg-purple-50 text-purple-600" />
         <app-kpi-card label="Gold Goals" [value]="formatNum(goldGoals)" icon="Au" iconBgClass="bg-amber-50 text-amber-600" />

@@ -9,6 +9,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, KpiCardComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Revenue & Commission</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Buy/sell revenue, GST collected, and spread analysis</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Buy Revenue" [value]="fC(totalBuyRev)" delta="+12%" icon="B" iconBgClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" sparklineColor="bg-emerald-400" />
         <app-kpi-card label="Total Sell Payout" [value]="fC(totalSellPay)" delta="+8%" icon="S" iconBgClass="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" sparklineColor="bg-red-400" />

@@ -11,6 +11,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, FormsModule, KpiCardComponent, ExportButtonComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Gift Transactions</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Peer-to-peer gift analytics, claimed vs unclaimed</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Gifts" [value]="fN(allData.length)" delta="+18%" icon="G" iconBgClass="bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400" sparklineColor="bg-pink-400" />
         <app-kpi-card label="Claimed" [value]="fN(claimed)" delta="+22%" icon="C" iconBgClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" sparklineColor="bg-emerald-400" />

@@ -13,6 +13,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, FormsModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">SIP Reports</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">SIP plans, payment schedules, and success rate analytics</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <app-kpi-card label="Total SIPs Created" [value]="formatNum(totalSIPs)" delta="+18%" icon="S" iconBgClass="bg-indigo-50 text-indigo-600" />
         <app-kpi-card label="Active SIPs" [value]="formatNum(activeSIPs)" icon="A" iconBgClass="bg-green-50 text-green-600" />

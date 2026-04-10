@@ -13,6 +13,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, FormsModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Transaction Reports</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Buy, sell, orders, and gift transaction analytics</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Buy Txns" [value]="formatNum(buyCount)" delta="+8.4%" icon="B" iconBgClass="bg-green-50 text-green-600" />
         <app-kpi-card label="Total Sell Txns" [value]="formatNum(sellCount)" delta="+3.1%" icon="S" iconBgClass="bg-red-50 text-red-600" />

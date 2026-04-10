@@ -9,6 +9,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, KpiCardComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Web vs Mobile</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Platform-wise transaction split and volume comparison</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Mobile Transactions" [value]="fN(mobileTxns)" delta="+15%" icon="M" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" sparklineColor="bg-blue-400" />
         <app-kpi-card label="Web Transactions" [value]="fN(webTxns)" delta="+8%" icon="W" iconBgClass="bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400" sparklineColor="bg-violet-400" />

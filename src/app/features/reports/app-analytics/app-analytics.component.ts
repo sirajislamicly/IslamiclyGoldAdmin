@@ -9,6 +9,12 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   imports: [CommonModule, KpiCardComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">App Analytics</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Play Store and App Store downloads, ratings, and reviews</p>
+      </div>
+
       <!-- Platform Toggle -->
       <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-lg p-0.5 w-fit">
         <button (click)="platform = 'both'"

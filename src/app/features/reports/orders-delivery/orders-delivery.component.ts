@@ -12,6 +12,12 @@ interface Order { id: number; orderId: string; userName: string; mobile: string;
   imports: [CommonModule, FormsModule, KpiCardComponent, ExportButtonComponent],
   template: `
     <div class="space-y-6">
+      <!-- Header -->
+      <div class="animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Orders & Delivery</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Order status funnel, product-wise breakdown, and shipping</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <app-kpi-card label="Total Orders" [value]="fN(allData.length)" delta="+9%" icon="O" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" sparklineColor="bg-blue-400" />
         <app-kpi-card label="Delivered" [value]="fN(delivered)" delta="+14%" icon="D" iconBgClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" sparklineColor="bg-emerald-400" />
