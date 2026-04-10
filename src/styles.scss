@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; margin: 0; font-family: 'Inter', system-ui, sans-serif; }
+
+.card {
+  @apply bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5;
+}
+
+.btn-primary {
+  @apply bg-gold-500 hover:bg-gold-600 text-white font-medium px-4 py-2 rounded-lg transition;
+}
+
+.input {
+  @apply w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-800 rounded-lg px-3 py-2
+         focus:outline-none focus:ring-2 focus:ring-gold-500;
+}
+
+.skeleton { @apply animate-pulse bg-slate-200 dark:bg-slate-700 rounded; }
