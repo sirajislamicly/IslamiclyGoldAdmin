@@ -115,8 +115,8 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
                 <div class="text-[11px] text-slate-400">{{ g.sipFrequency }}</div>
               </div>
 
-              <!-- Progress (fixed width) -->
-              <div class="w-[180px] px-4 flex-shrink-0">
+              <!-- Progress (fills remaining space) -->
+              <div class="flex-1 px-4 min-w-[180px]">
                 <div class="flex items-center justify-between text-[11px] mb-1">
                   <span class="text-slate-500 font-medium">{{ progress(g) }}%</span>
                   <span class="text-slate-400">{{ formatCurrency(g.currentAmount) }}</span>
@@ -128,21 +128,6 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
                                   'bg-gradient-to-r from-red-400 to-orange-500'"
                        [style.width.%]="progress(g)"></div>
                 </div>
-              </div>
-
-              <!-- Start Date -->
-              <div class="w-[90px] text-center flex-shrink-0 hidden xl:block">
-                <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ formatDateShort(g.startDate) }}</div>
-              </div>
-
-              <!-- End Date -->
-              <div class="w-[90px] text-center flex-shrink-0 hidden xl:block">
-                <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ formatDateShort(g.endDate) }}</div>
-              </div>
-
-              <!-- Last SIP Date -->
-              <div class="w-[90px] text-center flex-shrink-0 hidden xl:block">
-                <div class="text-[11px] font-medium" [ngClass]="isRecent(g.lastSipDate) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'">{{ formatDateShort(g.lastSipDate) }}</div>
               </div>
 
               <!-- Status (fixed width, centered) -->
