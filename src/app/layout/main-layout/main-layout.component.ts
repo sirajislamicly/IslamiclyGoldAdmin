@@ -8,12 +8,14 @@ import { NavbarComponent } from '../navbar/navbar.component';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, NavbarComponent],
   template: `
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden bg-slate-50/50 dark:bg-slate-950">
       <app-sidebar />
-      <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="flex-1 flex flex-col overflow-hidden min-w-0">
         <app-navbar />
-        <main class="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900">
-          <router-outlet />
+        <main class="flex-1 overflow-y-auto">
+          <div class="p-6 max-w-[1600px] mx-auto">
+            <router-outlet />
+          </div>
         </main>
       </div>
     </div>

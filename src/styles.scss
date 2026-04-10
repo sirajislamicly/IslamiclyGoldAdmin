@@ -2,19 +2,199 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { height: 100%; margin: 0; font-family: 'Inter', system-ui, sans-serif; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ============================================ */
+/*  BASE STYLES                                 */
+/* ============================================ */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================ */
+/*  COMPONENT CLASSES                           */
+/* ============================================ */
 
 .card {
-  @apply bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5;
+  @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-200/60 dark:border-slate-700/60 p-5;
+  @apply transition-all duration-300 ease-out;
+
+  &:hover {
+    @apply shadow-card-hover;
+  }
+}
+
+.card-glass {
+  @apply bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-glass border border-white/20 dark:border-slate-700/40 p-5;
+  @apply transition-all duration-300;
+}
+
+.card-solid {
+  @apply bg-white dark:bg-slate-800 rounded-2xl shadow-card border border-slate-200 dark:border-slate-700 p-5;
 }
 
 .btn-primary {
-  @apply bg-gold-500 hover:bg-gold-600 text-white font-medium px-4 py-2 rounded-lg transition;
+  @apply bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700
+         text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
+         shadow-sm hover:shadow-md hover:shadow-gold-500/20
+         active:scale-[0.98] transform;
+}
+
+.btn-secondary {
+  @apply bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600
+         text-slate-700 dark:text-slate-200 font-medium px-4 py-2 rounded-xl
+         transition-all duration-200 active:scale-[0.98] transform;
+}
+
+.btn-ghost {
+  @apply hover:bg-slate-100 dark:hover:bg-slate-700/60 text-slate-600 dark:text-slate-300
+         font-medium px-3 py-2 rounded-xl transition-all duration-200;
 }
 
 .input {
-  @apply w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-800 rounded-lg px-3 py-2
-         focus:outline-none focus:ring-2 focus:ring-gold-500;
+  @apply w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-200
+         rounded-xl px-3.5 py-2.5 text-sm
+         focus:outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500
+         placeholder:text-slate-400 dark:placeholder:text-slate-500
+         transition-all duration-200;
 }
 
-.skeleton { @apply animate-pulse bg-slate-200 dark:bg-slate-700 rounded; }
+.badge {
+  @apply px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide;
+}
+
+.badge-success { @apply bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400; }
+.badge-warning { @apply bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400; }
+.badge-danger  { @apply bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400; }
+.badge-info    { @apply bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400; }
+
+/* ============================================ */
+/*  ANIMATIONS                                  */
+/* ============================================ */
+
+.animate-in {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+
+/* ============================================ */
+/*  SCROLLBAR                                   */
+/* ============================================ */
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* ============================================ */
+/*  SKELETON LOADER                             */
+/* ============================================ */
+
+.skeleton {
+  @apply bg-slate-200 dark:bg-slate-700 rounded-lg;
+  background: linear-gradient(
+    90deg,
+    theme('colors.slate.200') 25%,
+    theme('colors.slate.100') 50%,
+    theme('colors.slate.200') 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    theme('colors.slate.700') 25%,
+    theme('colors.slate.600') 50%,
+    theme('colors.slate.700') 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* ============================================ */
+/*  GRADIENT TEXT                                */
+/* ============================================ */
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================ */
+/*  TOOLTIP                                     */
+/* ============================================ */
+
+.tooltip-wrapper {
+  @apply relative;
+
+  .tooltip {
+    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5
+           bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900
+           text-xs font-medium rounded-lg whitespace-nowrap
+           opacity-0 invisible transition-all duration-200 pointer-events-none z-50;
+  }
+
+  &:hover .tooltip {
+    @apply opacity-100 visible;
+  }
+}
+
+/* ============================================ */
+/*  CHART BAR HOVER                             */
+/* ============================================ */
+
+.chart-bar {
+  @apply transition-all duration-200 cursor-pointer;
+
+  &:hover {
+    filter: brightness(1.1);
+    transform: scaleY(1.02);
+    transform-origin: bottom;
+  }
+}
+
+/* ============================================ */
+/*  PAGE TRANSITION                             */
+/* ============================================ */
+
+router-outlet + * {
+  animation: fadeInUp 0.35s ease-out;
+}
+
+/* ============================================ */
+/*  NUMBER ANIMATION                            */
+/* ============================================ */
+
+.counter-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
