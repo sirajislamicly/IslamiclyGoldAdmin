@@ -36,34 +36,37 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
                       sparklineColor="bg-blue-400" />
       </div>
 
-      <!-- Filters -->
+      <!-- Filters - Single Row -->
       <div class="card p-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="relative flex-1 min-w-[200px] max-w-xs">
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1 max-w-xs">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input [(ngModel)]="search" (ngModelChange)="resetPage()" class="input pl-9 py-2 text-sm" placeholder="Search by user, goal name..." />
           </div>
-          <select [(ngModel)]="statusFilter" (ngModelChange)="resetPage()" class="input w-auto text-sm py-2">
+          <select [(ngModel)]="statusFilter" (ngModelChange)="resetPage()"
+                  class="border border-slate-200 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500 transition-all duration-200 min-w-[130px]">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="completed">Completed</option>
             <option value="paused">Paused</option>
           </select>
-          <select [(ngModel)]="metalFilter" (ngModelChange)="resetPage()" class="input w-auto text-sm py-2">
+          <select [(ngModel)]="metalFilter" (ngModelChange)="resetPage()"
+                  class="border border-slate-200 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500 transition-all duration-200 min-w-[120px]">
             <option value="">All Metals</option>
             <option value="gold">Gold</option>
             <option value="silver">Silver</option>
           </select>
-          <select [(ngModel)]="sortBy" (ngModelChange)="resetPage()" class="input w-auto text-sm py-2">
+          <select [(ngModel)]="sortBy" (ngModelChange)="resetPage()"
+                  class="border border-slate-200 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500 transition-all duration-200 min-w-[170px]">
             <option value="latest">Latest First</option>
             <option value="progress-high">Progress: High to Low</option>
             <option value="progress-low">Progress: Low to High</option>
             <option value="amount-high">Amount: High to Low</option>
             <option value="name">Name A-Z</option>
           </select>
-          <div class="text-xs text-slate-400 font-medium px-2">{{ filtered().length }} goals</div>
+          <div class="text-xs text-slate-400 font-medium whitespace-nowrap">{{ filtered().length }} goals</div>
         </div>
       </div>
 
