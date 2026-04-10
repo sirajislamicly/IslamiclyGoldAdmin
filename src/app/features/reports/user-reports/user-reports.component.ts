@@ -4,20 +4,17 @@ import { DataTableComponent, TableColumn } from '../../../shared/components/data
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { DateRangeFilterComponent } from '../../../shared/components/date-range-filter/date-range-filter.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { AugUser } from '../../../models/user.model';
 
 @Component({
   selector: 'app-user-reports',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent],
+  imports: [CommonModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">User Reports</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Total users, KYC status breakdown, and registration trends</p>
-      </div>
+      <app-report-header title="User Reports" description="Total users, KYC status breakdown, and registration trends" iconText="U" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" />
 
       <!-- KPI Row -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

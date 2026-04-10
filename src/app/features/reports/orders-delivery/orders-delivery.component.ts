@@ -3,20 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 
 interface Order { id: number; orderId: string; userName: string; mobile: string; productName: string; sku: string; weight: number; metalType: string; rate: number; shipping: number; status: string; createdAt: string; }
 
 @Component({
   selector: 'app-orders-delivery',
   standalone: true,
-  imports: [CommonModule, FormsModule, KpiCardComponent, ExportButtonComponent],
+  imports: [CommonModule, FormsModule, KpiCardComponent, ExportButtonComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Orders & Delivery</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Order status funnel, product-wise breakdown, and shipping</p>
-      </div>
+      <app-report-header title="Orders &amp; Delivery" description="Order status funnel, product-wise breakdown, and shipping" iconText="O" iconBgClass="bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <app-kpi-card label="Total Orders" [value]="fN(allData.length)" delta="+9%" icon="O" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" sparklineColor="bg-blue-400" />

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 
 interface PGTransaction {
   id: number; orderId: string; txId: string | null; paymentStatus: string;
@@ -14,14 +15,10 @@ interface PGTransaction {
 @Component({
   selector: 'app-payment-gateway',
   standalone: true,
-  imports: [CommonModule, FormsModule, KpiCardComponent, ExportButtonComponent],
+  imports: [CommonModule, FormsModule, KpiCardComponent, ExportButtonComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Payment Gateway</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Payment success, failure, and gateway-wise analytics</p>
-      </div>
+      <app-report-header title="Payment Gateway" description="Payment success, failure, and gateway-wise analytics" iconText="P" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <app-kpi-card label="Total Payments" [value]="formatNum(allData.length)" delta="+12%" icon="P"

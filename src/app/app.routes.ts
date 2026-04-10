@@ -44,7 +44,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/reports/reports.component').then(m => m.ReportsComponent),
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'users' },
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./features/reports/overview/overview.component').then(m => m.ReportsOverviewComponent)
+          },
           {
             path: 'users',
             loadComponent: () =>

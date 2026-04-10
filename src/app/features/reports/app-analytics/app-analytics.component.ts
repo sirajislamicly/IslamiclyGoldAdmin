@@ -1,19 +1,16 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 import { MockDataService } from '../../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-app-analytics',
   standalone: true,
-  imports: [CommonModule, KpiCardComponent],
+  imports: [CommonModule, KpiCardComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">App Analytics</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Play Store and App Store downloads, ratings, and reviews</p>
-      </div>
+      <app-report-header title="App Analytics" description="Play Store and App Store downloads, ratings, and reviews" iconText="A" iconBgClass="bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400" />
 
       <!-- Platform Toggle -->
       <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-lg p-0.5 w-fit">

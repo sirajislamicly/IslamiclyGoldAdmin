@@ -5,19 +5,16 @@ import { DataTableComponent, TableColumn } from '../../../shared/components/data
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { DateRangeFilterComponent } from '../../../shared/components/date-range-filter/date-range-filter.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 import { MockDataService } from '../../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-transaction-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Transaction Reports</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Buy, sell, orders, and gift transaction analytics</p>
-      </div>
+      <app-report-header title="Transaction Reports" description="Buy, sell, orders, and gift transaction analytics" iconText="T" iconBgClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Buy Txns" [value]="formatNum(buyCount)" delta="+8.4%" icon="B" iconBgClass="bg-green-50 text-green-600" />

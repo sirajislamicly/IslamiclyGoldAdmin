@@ -5,19 +5,16 @@ import { DataTableComponent, TableColumn } from '../../../shared/components/data
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { DateRangeFilterComponent } from '../../../shared/components/date-range-filter/date-range-filter.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 import { MockDataService } from '../../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-sip-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent],
+  imports: [CommonModule, FormsModule, DataTableComponent, ExportButtonComponent, DateRangeFilterComponent, KpiCardComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">SIP Reports</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">SIP plans, payment schedules, and success rate analytics</p>
-      </div>
+      <app-report-header title="SIP Reports" description="SIP plans, payment schedules, and success rate analytics" iconText="S" iconBgClass="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <app-kpi-card label="Total SIPs Created" [value]="formatNum(totalSIPs)" delta="+18%" icon="S" iconBgClass="bg-indigo-50 text-indigo-600" />

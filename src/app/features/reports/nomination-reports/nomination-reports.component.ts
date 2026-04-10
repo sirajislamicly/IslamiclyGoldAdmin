@@ -3,19 +3,16 @@ import { CommonModule } from '@angular/common';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 import { MockDataService } from '../../../core/services/mock-data.service';
 
 @Component({
   selector: 'app-nomination-reports',
   standalone: true,
-  imports: [CommonModule, DataTableComponent, ExportButtonComponent, KpiCardComponent],
+  imports: [CommonModule, DataTableComponent, ExportButtonComponent, KpiCardComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Nomination Reports</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Nominee data, relationship breakdown, and trends</p>
-      </div>
+      <app-report-header title="Nomination Reports" description="Nominee data, relationship breakdown, and trends" iconText="N" iconBgClass="bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Nominations" [value]="formatNum(totalNominations)" delta="+6.8%" icon="N" iconBgClass="bg-cyan-50 text-cyan-600" />

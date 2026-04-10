@@ -1,18 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 
 @Component({
   selector: 'app-security-report',
   standalone: true,
-  imports: [CommonModule, KpiCardComponent],
+  imports: [CommonModule, KpiCardComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Security & Sessions</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">OTP verification funnel, active sessions, and authentication logs</p>
-      </div>
+      <app-report-header title="Security &amp; Sessions" description="OTP verification funnel, active sessions, and authentication logs" iconText="S" iconBgClass="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <app-kpi-card label="OTPs Generated" [value]="fN(otpGenerated)" delta="+8%" icon="O" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" sparklineColor="bg-blue-400" />

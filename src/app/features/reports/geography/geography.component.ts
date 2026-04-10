@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
+import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
 import { MockDataService } from '../../../core/services/mock-data.service';
 
 interface StateData { state:string; users:number; buyVol:number; sellVol:number; pct:number; }
@@ -9,14 +10,10 @@ interface StateData { state:string; users:number; buyVol:number; sellVol:number;
 @Component({
   selector: 'app-geography-report',
   standalone: true,
-  imports: [CommonModule, KpiCardComponent, ExportButtonComponent],
+  imports: [CommonModule, KpiCardComponent, ExportButtonComponent, ReportHeaderComponent],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
-      <div class="animate-fade-in">
-        <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">User Geography</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">State-wise user distribution and regional transaction volume</p>
-      </div>
+      <app-report-header title="User Geography" description="State-wise user distribution and regional transaction volume" iconText="G" iconBgClass="bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="States Covered" [value]="fN(stateData.length)" icon="S" iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" sparklineColor="bg-blue-400" />
