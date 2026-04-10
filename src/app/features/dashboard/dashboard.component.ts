@@ -5,6 +5,7 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
 import { DateRangeFilterComponent } from '../../shared/components/date-range-filter/date-range-filter.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 import { MockDataService } from '../../core/services/mock-data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface Activity { user: string; action: string; time: string; type: string; }
 
@@ -17,8 +18,8 @@ interface Activity { user: string; action: string; time: string; type: string; }
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="animate-fade-in">
-          <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Dashboard</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Real-time overview of your gold investment platform</p>
+          <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">{{ greeting }}, {{ userName }}</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Here's what's happening with your gold platform today</p>
         </div>
         <app-date-range-filter (rangeChange)="onDateChange($event)" />
       </div>
@@ -255,6 +256,10 @@ interface Activity { user: string; action: string; time: string; type: string; }
 export class DashboardComponent implements OnInit {
   loading = signal(true);
   private mockData = inject(MockDataService);
+  private auth = inject(AuthService);
+
+  greeting = '';
+  userName = '';
 
   stats!: ReturnType<MockDataService['getDashboardStats']>;
   rateCards: { label: string; value: string; color: string }[] = [];
@@ -275,6 +280,11 @@ export class DashboardComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    // Greeting
+    const hour = new Date().getHours();
+    this.greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    this.userName = this.auth.currentUser()?.name?.split(' ')[0] || 'Admin';
+
     // Simulate loading
     setTimeout(() => this.loading.set(false), 800);
     this.stats = this.mockData.getDashboardStats();
