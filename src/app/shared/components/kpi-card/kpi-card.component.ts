@@ -1,21 +1,22 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CountUpDirective } from '../../directives/count-up.directive';
 
 @Component({
   selector: 'app-kpi-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CountUpDirective],
   template: `
-    <div class="card group hover:shadow-card-hover cursor-default animate-fade-in-up"
+    <div class="card group hover:shadow-card-hover cursor-default hover-glow-gold"
          [class]="borderAccent ? 'border-l-[3px] ' + borderAccent : ''">
       <div class="flex items-start justify-between mb-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-transform duration-300 group-hover:scale-110"
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
              [ngClass]="iconBgClass">
           <ng-content select="[icon]"></ng-content>
           <span *ngIf="icon" class="text-sm">{{ icon }}</span>
         </div>
         <span *ngIf="delta"
-              class="text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 transition-transform duration-300 group-hover:scale-105"
               [ngClass]="deltaUp ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
                          deltaDown ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
                          'bg-slate-50 text-slate-500 dark:bg-slate-700 dark:text-slate-400'">
@@ -26,16 +27,23 @@ import { CommonModule } from '@angular/common';
       </div>
       <div>
         <div class="text-[13px] text-slate-500 dark:text-slate-400 font-medium">{{ label }}</div>
-        <div class="text-[22px] font-bold text-slate-800 dark:text-white mt-0.5 counter-value tracking-tight">
+        <div class="text-[22px] font-bold text-slate-800 dark:text-white mt-0.5 counter-value tracking-tight"
+             *ngIf="numericValue !== null"
+             [appCountUp]="numericValue"
+             [prefix]="valuePrefix"
+             [duration]="1400">
+        </div>
+        <div class="text-[22px] font-bold text-slate-800 dark:text-white mt-0.5 counter-value tracking-tight"
+             *ngIf="numericValue === null">
           {{ loading ? '---' : value }}
         </div>
         <div *ngIf="subtitle" class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">{{ subtitle }}</div>
       </div>
 
-      <!-- Mini Sparkline -->
-      <div *ngIf="sparkline.length" class="mt-3 flex items-end gap-[2px] h-6">
+      <!-- Mini Sparkline with animation -->
+      <div *ngIf="sparkline.length" class="mt-3 flex items-end gap-[2px] h-7">
         <div *ngFor="let v of sparkline; let i = index"
-             class="flex-1 rounded-sm transition-all duration-200 group-hover:opacity-100"
+             class="flex-1 rounded-sm chart-bar-animated"
              [class]="sparklineColor"
              [style.height.%]="(v / sparklineMax) * 100"
              [style.opacity]="0.4 + (i / sparkline.length) * 0.6">
@@ -59,10 +67,23 @@ export class KpiCardComponent implements OnInit {
   deltaUp = false;
   deltaDown = false;
   sparklineMax = 1;
+  numericValue: number | null = null;
+  valuePrefix = '';
 
   ngOnInit(): void {
     this.deltaUp = this.delta.startsWith('+') || this.delta.toLowerCase().startsWith('up');
     this.deltaDown = this.delta.startsWith('-') || this.delta.toLowerCase().startsWith('down');
+
+    // Parse numeric value for count-up
+    const strVal = String(this.value);
+    if (/^[^a-zA-Z]*[\d,]+[^a-zA-Z]*$/.test(strVal)) {
+      const match = strVal.match(/^([^\d]*)([\d,]+)(.*)/);
+      if (match) {
+        this.valuePrefix = match[1] || '';
+        this.numericValue = parseFloat(match[2].replace(/,/g, ''));
+      }
+    }
+
     if (this.sparkline.length) {
       this.sparklineMax = Math.max(...this.sparkline, 1);
     }

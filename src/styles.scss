@@ -23,9 +23,43 @@ html, body {
 .card {
   @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-card border border-slate-200/60 dark:border-slate-700/60 p-5;
   @apply transition-all duration-300 ease-out;
+  transform: translateY(0);
 
   &:hover {
     @apply shadow-card-hover;
+    transform: translateY(-2px);
+  }
+}
+
+.card-gradient-border {
+  position: relative;
+  background: white;
+  border: none;
+  border-radius: 1rem;
+  padding: 1.25rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 1.5px;
+    background: linear-gradient(135deg, #f59e0b, #d97706, #f59e0b, #fbbf24);
+    background-size: 300% 300%;
+    animation: gradient 4s ease infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+.dark .card-gradient-border {
+  background: rgb(30 41 59 / 0.8);
+
+  &::before {
+    background: linear-gradient(135deg, #f59e0b, #d97706, #f59e0b, #fbbf24);
+    background-size: 300% 300%;
+    animation: gradient 4s ease infinite;
   }
 }
 
@@ -197,4 +231,142 @@ router-outlet + * {
 .counter-value {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/* ============================================ */
+/*  ANIMATED CHART BARS                         */
+/* ============================================ */
+
+.chart-bar-animated {
+  transform-origin: bottom;
+  animation: growUp 0.8s ease-out forwards;
+  transform: scaleY(0);
+
+  &:nth-child(1)  { animation-delay: 0.05s; }
+  &:nth-child(2)  { animation-delay: 0.1s; }
+  &:nth-child(3)  { animation-delay: 0.15s; }
+  &:nth-child(4)  { animation-delay: 0.2s; }
+  &:nth-child(5)  { animation-delay: 0.25s; }
+  &:nth-child(6)  { animation-delay: 0.3s; }
+  &:nth-child(7)  { animation-delay: 0.35s; }
+  &:nth-child(8)  { animation-delay: 0.4s; }
+  &:nth-child(9)  { animation-delay: 0.45s; }
+  &:nth-child(10) { animation-delay: 0.5s; }
+  &:nth-child(11) { animation-delay: 0.55s; }
+  &:nth-child(12) { animation-delay: 0.6s; }
+}
+
+@keyframes growUp {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* ============================================ */
+/*  PULSE RING                                  */
+/* ============================================ */
+
+.pulse-ring {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 2px solid currentColor;
+    opacity: 0;
+    animation: pulseRing 2s ease-out infinite;
+  }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* ============================================ */
+/*  HOVER GLOW                                  */
+/* ============================================ */
+
+.hover-glow-gold:hover {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.hover-glow-blue:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.hover-glow-green:hover {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ============================================ */
+/*  CONFETTI BURST                              */
+/* ============================================ */
+
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confettiFall 2.5s ease-out forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ============================================ */
+/*  TYPING CURSOR                               */
+/* ============================================ */
+
+.typing-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: theme('colors.gold.500');
+  font-weight: 300;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ============================================ */
+/*  RIPPLE BUTTON                               */
+/* ============================================ */
+
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.5s, opacity 0.3s;
+  }
+
+  &:active::after {
+    transform: scale(2.5);
+    opacity: 1;
+    transition: 0s;
+  }
 }

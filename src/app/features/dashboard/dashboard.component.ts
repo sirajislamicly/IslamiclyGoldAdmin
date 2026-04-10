@@ -1,8 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { DateRangeFilterComponent } from '../../shared/components/date-range-filter/date-range-filter.component';
+import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 import { MockDataService } from '../../core/services/mock-data.service';
 
 interface Activity { user: string; action: string; time: string; type: string; }
@@ -10,7 +11,7 @@ interface Activity { user: string; action: string; time: string; type: string; }
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, KpiCardComponent, DateRangeFilterComponent],
+  imports: [CommonModule, RouterLink, KpiCardComponent, DateRangeFilterComponent, SkeletonComponent],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -23,7 +24,7 @@ interface Activity { user: string; action: string; time: string; type: string; }
       </div>
 
       <!-- Live Rates Banner -->
-      <div class="card relative overflow-hidden animate-fade-in-up">
+      <div class="card card-gradient-border relative overflow-hidden animate-fade-in-up">
         <div class="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-yellow-500/5 to-orange-500/5 dark:from-amber-500/10 dark:via-yellow-500/5 dark:to-orange-500/10"></div>
         <div class="relative flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
@@ -49,7 +50,18 @@ interface Activity { user: string; action: string; time: string; type: string; }
         </div>
       </div>
 
+      <!-- Loading Skeletons -->
+      @if (loading()) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          @for (i of [1,2,3,4]; track i) {
+            <app-skeleton variant="card" />
+          }
+        </div>
+        <app-skeleton variant="chart" />
+      }
+
       <!-- KPI Grid -->
+      @if (!loading()) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-kpi-card label="Total Users" [value]="formatNum(stats.totalUsers)" delta="+4.2%" icon="U"
                       iconBgClass="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
@@ -97,9 +109,9 @@ interface Activity { user: string; action: string; time: string; type: string; }
             @for (b of bars; track $index) {
               <div class="flex-1 flex flex-col items-center gap-0.5">
                 <div class="w-full flex gap-[2px] items-end justify-center" style="height: 200px">
-                  <div class="w-[44%] bg-gradient-to-t from-amber-600 to-amber-300 rounded-t-md chart-bar"
+                  <div class="w-[44%] bg-gradient-to-t from-amber-600 to-amber-300 rounded-t-md chart-bar chart-bar-animated"
                        [style.height.%]="b.gold"></div>
-                  <div class="w-[44%] bg-gradient-to-t from-slate-500 to-slate-300 rounded-t-md chart-bar"
+                  <div class="w-[44%] bg-gradient-to-t from-slate-500 to-slate-300 rounded-t-md chart-bar chart-bar-animated"
                        [style.height.%]="b.silver"></div>
                 </div>
                 <div class="text-[10px] text-slate-400 font-medium mt-1">{{ months[$index] }}</div>
@@ -236,10 +248,12 @@ interface Activity { user: string; action: string; time: string; type: string; }
           </div>
         </div>
       </div>
+      }
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
+  loading = signal(true);
   private mockData = inject(MockDataService);
 
   stats!: ReturnType<MockDataService['getDashboardStats']>;
@@ -261,6 +275,8 @@ export class DashboardComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    // Simulate loading
+    setTimeout(() => this.loading.set(false), 800);
     this.stats = this.mockData.getDashboardStats();
     const rates = this.mockData.getCurrentRates();
     this.rateCards = [

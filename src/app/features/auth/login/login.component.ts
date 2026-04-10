@@ -3,12 +3,26 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
+    <!-- Confetti -->
+    @if (showConfetti()) {
+      <div class="confetti-container">
+        @for (c of confettiPieces; track c.id) {
+          <div class="confetti-piece"
+               [style.left.%]="c.x"
+               [style.background]="c.color"
+               [style.animation-delay.ms]="c.delay"
+               [style.animation-duration.s]="c.duration"></div>
+        }
+      </div>
+    }
+
     <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       <!-- Animated Gradient Background -->
       <div class="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"></div>
@@ -173,6 +187,16 @@ export class LoginComponent implements OnDestroy {
   auth = inject(AuthService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private toast = inject(ToastService);
+
+  showConfetti = signal(false);
+  confettiPieces = Array.from({ length: 50 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    color: ['#f59e0b', '#d97706', '#fbbf24', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][Math.floor(Math.random() * 7)],
+    delay: Math.random() * 500,
+    duration: 1.5 + Math.random() * 1.5
+  }));
 
   otpSlots = [0, 1, 2, 3, 4, 5];
   emailForm = this.fb.nonNullable.group({ email: ['', [Validators.required, Validators.email]] });
@@ -198,7 +222,13 @@ export class LoginComponent implements OnDestroy {
   verifyOtp(): void {
     if (this.otpForm.invalid) return;
     this.auth.verifyOtp(this.auth.otpEmail(), this.otpForm.getRawValue().otp).subscribe({
-      next: (res) => { if (res.success) this.router.navigate(['/dashboard']); }
+      next: (res) => {
+        if (res.success) {
+          this.showConfetti.set(true);
+          this.toast.success('Welcome back! Logged in successfully.');
+          setTimeout(() => this.router.navigate(['/dashboard']), 1200);
+        }
+      }
     });
   }
 
