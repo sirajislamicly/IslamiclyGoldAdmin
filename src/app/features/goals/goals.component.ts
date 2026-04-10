@@ -72,16 +72,6 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
         </div>
       </div>
 
-      <!-- Column Header -->
-      <div class="hidden lg:flex items-center gap-0 px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-        <div class="w-[280px] pl-14">User / Goal</div>
-        <div class="w-[80px] text-center">Metal</div>
-        <div class="w-[100px] text-right">SIP</div>
-        <div class="w-[180px] text-center">Progress</div>
-        <div class="w-[80px] text-center">Status</div>
-        <div class="w-[32px]"></div>
-      </div>
-
       <!-- Goal Rows -->
       <div class="space-y-2">
         @for (g of paginated(); track g.id; let i = $index) {
@@ -138,6 +128,21 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
                                   'bg-gradient-to-r from-red-400 to-orange-500'"
                        [style.width.%]="progress(g)"></div>
                 </div>
+              </div>
+
+              <!-- Start Date -->
+              <div class="w-[90px] text-center flex-shrink-0 hidden xl:block">
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ formatDateShort(g.startDate) }}</div>
+              </div>
+
+              <!-- End Date -->
+              <div class="w-[90px] text-center flex-shrink-0 hidden xl:block">
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ formatDateShort(g.endDate) }}</div>
+              </div>
+
+              <!-- Last SIP Date -->
+              <div class="w-[90px] text-center flex-shrink-0 hidden xl:block">
+                <div class="text-[11px] font-medium" [ngClass]="isRecent(g.lastSipDate) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'">{{ formatDateShort(g.lastSipDate) }}</div>
               </div>
 
               <!-- Status (fixed width, centered) -->
@@ -297,7 +302,8 @@ export class GoalsComponent {
     { key: 'id', label: 'ID' }, { key: 'userName', label: 'User' }, { key: 'userMobile', label: 'Mobile' },
     { key: 'goalName', label: 'Goal' }, { key: 'metalType', label: 'Metal' }, { key: 'targetAmount', label: 'Target' },
     { key: 'currentAmount', label: 'Saved' }, { key: 'sipAmount', label: 'SIP Amount' }, { key: 'sipFrequency', label: 'Frequency' },
-    { key: 'status', label: 'Status' }, { key: 'createdAt', label: 'Created' }
+    { key: 'startDate', label: 'Start Date' }, { key: 'endDate', label: 'End Date' },
+    { key: 'lastSipDate', label: 'Last SIP Date' }, { key: 'status', label: 'Status' }, { key: 'createdAt', label: 'Created' }
   ];
 
   filtered = computed(() => {
@@ -354,6 +360,18 @@ export class GoalsComponent {
     catch { return d; }
   }
 
+  formatDateShort(d: string): string {
+    try { return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }); }
+    catch { return d; }
+  }
+
+  isRecent(d: string): boolean {
+    try {
+      const diff = Date.now() - new Date(d).getTime();
+      return diff < 7 * 24 * 60 * 60 * 1000; // within 7 days
+    } catch { return false; }
+  }
+
   private generateGoals(): Goal[] {
     const goals: Goal[] = [];
     const statuses: Goal['status'][] = ['active', 'completed', 'paused'];
@@ -391,6 +409,7 @@ export class GoalsComponent {
         installmentsPaid: Math.floor(Math.random() * totalInst),
         totalInstallments: totalInst,
         status,
+        lastSipDate: new Date(startDate.getTime() + Math.floor(Math.random() * 300) * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: startDate.toISOString()
       });
     }

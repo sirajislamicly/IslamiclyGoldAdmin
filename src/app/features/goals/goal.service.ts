@@ -22,6 +22,7 @@ export interface Goal {
   installmentsPaid: number;
   totalInstallments: number;
   status: 'active' | 'completed' | 'paused';
+  lastSipDate: string;
   createdAt: string;
 }
 
