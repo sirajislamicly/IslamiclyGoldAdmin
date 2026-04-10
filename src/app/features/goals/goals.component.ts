@@ -72,64 +72,63 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
         </div>
       </div>
 
+      <!-- Column Header -->
+      <div class="hidden lg:flex items-center gap-0 px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <div class="w-[280px] pl-14">User / Goal</div>
+        <div class="w-[80px] text-center">Metal</div>
+        <div class="w-[100px] text-right">SIP</div>
+        <div class="w-[180px] text-center">Progress</div>
+        <div class="w-[80px] text-center">Status</div>
+        <div class="w-[32px]"></div>
+      </div>
+
       <!-- Goal Rows -->
-      <div class="space-y-3">
+      <div class="space-y-2">
         @for (g of paginated(); track g.id; let i = $index) {
           <div class="card hover-glow-gold p-0 overflow-hidden animate-fade-in-up"
                [style.animation-delay.ms]="i * 40">
 
             <!-- Main Row -->
-            <div class="flex items-center gap-4 p-4 cursor-pointer" (click)="toggle(g.id)">
+            <div class="flex items-center gap-0 p-4 cursor-pointer" (click)="toggle(g.id)">
 
-              <!-- User Avatar -->
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 transition-transform duration-300"
-                   [ngClass]="g.metalType === 'gold'
-                     ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
-                     : 'bg-gradient-to-br from-slate-400 to-slate-600 text-white'"
-                   [class.scale-110]="expanded().has(g.id)">
-                {{ g.userName[0] }}
-              </div>
-
-              <!-- User + Goal Info -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ g.userName }}</span>
-                  <span class="badge text-[10px]"
-                        [ngClass]="g.kycStatus === 'approved' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                                   g.kycStatus === 'pending' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                                   'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'">
-                    {{ g.kycStatus }}
-                  </span>
+              <!-- User Avatar + Info (fixed width) -->
+              <div class="w-[280px] flex items-center gap-3 flex-shrink-0 min-w-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 transition-transform duration-300"
+                     [ngClass]="g.metalType === 'gold'
+                       ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+                       : 'bg-gradient-to-br from-slate-400 to-slate-600 text-white'"
+                     [class.scale-110]="expanded().has(g.id)">
+                  {{ g.userName[0] }}
                 </div>
-                <div class="text-[12px] text-slate-400 mt-0.5 flex items-center gap-3">
-                  <span class="flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58"/></svg>
-                    {{ g.goalName }}
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
-                    {{ g.userMobile }}
-                  </span>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ g.userName }}</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2 truncate">
+                    <span>{{ g.goalName }}</span>
+                    <span class="text-slate-300 dark:text-slate-600">|</span>
+                    <span>{{ g.userMobile }}</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Metal Badge -->
-              <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold"
-                   [ngClass]="g.metalType === 'gold' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
-                <span class="w-2 h-2 rounded-full" [ngClass]="g.metalType === 'gold' ? 'bg-amber-500' : 'bg-slate-400'"></span>
-                {{ g.metalType | titlecase }}
+              <!-- Metal Badge (fixed width, centered) -->
+              <div class="w-[80px] flex justify-center flex-shrink-0">
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold"
+                     [ngClass]="g.metalType === 'gold' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
+                  <span class="w-2 h-2 rounded-full" [ngClass]="g.metalType === 'gold' ? 'bg-amber-500' : 'bg-slate-400'"></span>
+                  {{ g.metalType | titlecase }}
+                </div>
               </div>
 
-              <!-- SIP Info -->
-              <div class="hidden md:block text-right">
+              <!-- SIP Info (fixed width, right-aligned) -->
+              <div class="w-[100px] text-right flex-shrink-0">
                 <div class="text-sm font-bold text-slate-800 dark:text-white counter-value">{{ formatCurrency(g.sipAmount) }}</div>
                 <div class="text-[11px] text-slate-400">{{ g.sipFrequency }}</div>
               </div>
 
-              <!-- Progress -->
-              <div class="w-32 hidden lg:block">
+              <!-- Progress (fixed width) -->
+              <div class="w-[180px] px-4 flex-shrink-0">
                 <div class="flex items-center justify-between text-[11px] mb-1">
-                  <span class="text-slate-500">{{ progress(g) }}%</span>
+                  <span class="text-slate-500 font-medium">{{ progress(g) }}%</span>
                   <span class="text-slate-400">{{ formatCurrency(g.currentAmount) }}</span>
                 </div>
                 <div class="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -141,19 +140,23 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
                 </div>
               </div>
 
-              <!-- Status -->
-              <span class="badge text-[10px] hidden sm:inline-flex"
-                    [ngClass]="g.status === 'active' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                               g.status === 'completed' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
-                               'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'">
-                {{ g.status }}
-              </span>
+              <!-- Status (fixed width, centered) -->
+              <div class="w-[80px] flex justify-center flex-shrink-0">
+                <span class="badge text-[10px]"
+                      [ngClass]="g.status === 'active' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                                 g.status === 'completed' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
+                                 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'">
+                  {{ g.status }}
+                </span>
+              </div>
 
               <!-- Expand Arrow -->
-              <button class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-transform duration-300"
-                      [class.rotate-180]="expanded().has(g.id)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
+              <div class="w-[32px] flex justify-center flex-shrink-0">
+                <button class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-transform duration-300"
+                        [class.rotate-180]="expanded().has(g.id)">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+              </div>
             </div>
 
             <!-- Expanded Details -->
