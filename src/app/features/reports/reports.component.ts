@@ -36,6 +36,15 @@ export class ReportsComponent {
     { label: 'Transactions', route: '/reports/transactions' },
     { label: 'SIP', route: '/reports/sip' },
     { label: 'Nominations', route: '/reports/nominations' },
+    { label: 'Payments', route: '/reports/payment-gateway' },
+    { label: 'Orders', route: '/reports/orders' },
+    { label: 'Gifts', route: '/reports/gifts' },
+    { label: 'Rate Alerts', route: '/reports/rate-alerts' },
+    { label: 'Revenue', route: '/reports/revenue' },
+    { label: 'Bank Accounts', route: '/reports/bank-accounts' },
+    { label: 'Geography', route: '/reports/geography' },
+    { label: 'Security', route: '/reports/security' },
+    { label: 'Web vs Mobile', route: '/reports/web-mobile' },
     { label: 'App Analytics', route: '/reports/app-analytics' }
   ];
 }

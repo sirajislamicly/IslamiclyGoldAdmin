@@ -74,6 +74,51 @@ export const routes: Routes = [
             path: 'app-analytics',
             loadComponent: () =>
               import('./features/reports/app-analytics/app-analytics.component').then(m => m.AppAnalyticsComponent)
+          },
+          {
+            path: 'payment-gateway',
+            loadComponent: () =>
+              import('./features/reports/payment-gateway/payment-gateway.component').then(m => m.PaymentGatewayComponent)
+          },
+          {
+            path: 'orders',
+            loadComponent: () =>
+              import('./features/reports/orders-delivery/orders-delivery.component').then(m => m.OrdersDeliveryComponent)
+          },
+          {
+            path: 'gifts',
+            loadComponent: () =>
+              import('./features/reports/gifts/gifts.component').then(m => m.GiftsComponent)
+          },
+          {
+            path: 'rate-alerts',
+            loadComponent: () =>
+              import('./features/reports/rate-alerts/rate-alerts.component').then(m => m.RateAlertsComponent)
+          },
+          {
+            path: 'revenue',
+            loadComponent: () =>
+              import('./features/reports/revenue/revenue.component').then(m => m.RevenueComponent)
+          },
+          {
+            path: 'bank-accounts',
+            loadComponent: () =>
+              import('./features/reports/bank-accounts/bank-accounts.component').then(m => m.BankAccountsComponent)
+          },
+          {
+            path: 'geography',
+            loadComponent: () =>
+              import('./features/reports/geography/geography.component').then(m => m.GeographyComponent)
+          },
+          {
+            path: 'security',
+            loadComponent: () =>
+              import('./features/reports/security/security.component').then(m => m.SecurityComponent)
+          },
+          {
+            path: 'web-mobile',
+            loadComponent: () =>
+              import('./features/reports/web-mobile/web-mobile.component').then(m => m.WebMobileComponent)
           }
         ]
       },
