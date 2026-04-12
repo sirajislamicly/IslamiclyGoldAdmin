@@ -1,12 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { DateRangeFilterComponent } from '../../../shared/components/date-range-filter/date-range-filter.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-transaction-reports',
@@ -88,7 +89,7 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class TransactionReportsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
 
   activeTab = 'Buy';
   metalFilter = '';
@@ -151,18 +152,40 @@ export class TransactionReportsComponent implements OnInit {
   giftExportCols = this.giftColumns.map(c => ({ key: c.key, label: c.label }));
 
   ngOnInit(): void {
-    this.allBuys = this.mockData.getBuyTransactions(500).map(b => ({ ...b }));
-    this.allSells = this.mockData.getSellTransactions(200).map(s => ({ ...s }));
-    this.orders = this.mockData.getOrders(100).map(o => ({ ...o }));
-    this.gifts = this.mockData.getGifts(50).map(g => ({ ...g }));
-
-    this.buyCount = this.allBuys.length;
-    this.sellCount = this.allSells.length;
-    this.buyVolume = this.allBuys.reduce((s, b) => s + (b['totalAmount'] as number), 0);
-    this.sellVolume = this.allSells.reduce((s, b) => s + (b['totalAmount'] as number), 0);
-
-    this.filteredBuys = this.allBuys;
-    this.filteredSells = this.allSells;
+    forkJoin({
+      kpis: this.api.transactionsKpis(),
+      buys: this.api.transactionsBuy({ pageSize: 500 }),
+      sells: this.api.transactionsSell({ pageSize: 200 }),
+      orders: this.api.ordersList({ pageSize: 100 }),
+      gifts: this.api.giftsList({ pageSize: 50 })
+    }).subscribe({
+      next: (res) => {
+        this.allBuys = (res.buys || []).map((b: any) => ({ ...b }));
+        this.allSells = (res.sells || []).map((s: any) => ({ ...s }));
+        this.orders = (res.orders || []).map((o: any) => ({ ...o }));
+        this.gifts = (res.gifts || []).map((g: any) => ({
+          ...g,
+          senderUID: g.senderuid,
+          receiverUID: g.receiveruid,
+          isClaimed: g.isclaimed
+        }));
+        const kpis = res.kpis || {};
+        this.buyCount = kpis.buyCount || 0;
+        this.sellCount = kpis.sellCount || 0;
+        this.buyVolume = kpis.buyVolume || 0;
+        this.sellVolume = kpis.sellVolume || 0;
+        this.filteredBuys = this.allBuys;
+        this.filteredSells = this.allSells;
+      },
+      error: () => {
+        this.allBuys = [];
+        this.allSells = [];
+        this.orders = [];
+        this.gifts = [];
+        this.filteredBuys = [];
+        this.filteredSells = [];
+      }
+    });
   }
 
   applyFilters(): void {

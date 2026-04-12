@@ -1,9 +1,11 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Goal } from './goal.service';
 import { ExportButtonComponent } from '../../shared/components/export-button/export-button.component';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
+import { ApiService } from '../../core/services/api.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-goals',
@@ -259,7 +261,7 @@ import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.comp
     </div>
   `
 })
-export class GoalsComponent {
+export class GoalsComponent implements OnInit {
   search = '';
   statusFilter = '';
   metalFilter = '';
@@ -281,7 +283,41 @@ export class GoalsComponent {
   private goalNames = ['Marriage', 'Hajj', 'Education', 'Emergency Fund', 'Retirement', 'Home', 'Business', 'Travel'];
   private states = ['Gujarat', 'Maharashtra', 'Karnataka', 'Bihar', 'Tamil Nadu', 'Delhi', 'Uttar Pradesh', 'Rajasthan', 'Kerala', 'Telangana'];
 
-  goals = signal<Goal[]>(this.generateGoals());
+  private api = inject(ApiService);
+  goals = signal<Goal[]>([]);
+
+  ngOnInit(): void {
+    forkJoin({
+      list: this.api.goalsList({ pageSize: 200 }),
+      kpis: this.api.goalsKpis()
+    }).subscribe(res => {
+      this.goals.set((res.list || []).map((g: any) => ({
+        id: g.id,
+        goalName: g.goalName || g.sipName || 'Goal',
+        metalType: (g.metalType || 'gold') as 'gold' | 'silver',
+        sipId: g.sipid || g.sipId || 0,
+        targetAmount: g.targetAmount || 0,
+        currentAmount: g.currentAmount || 0,
+        sipAmount: g.sipAmount || 0,
+        sipFrequency: (g.sipFrequency || 'Monthly') as Goal['sipFrequency'],
+        userName: g.userName || 'Unknown',
+        userMobile: g.mobileNumber || '',
+        userEmail: g.userEmail || '',
+        kycStatus: (g.kycStatus || 'approved') as Goal['kycStatus'],
+        userState: g.userState || '-',
+        startDate: g.startDate || '',
+        endDate: g.endDate || '',
+        installmentsPaid: g.installmentsPaid || 0,
+        totalInstallments: g.totalInstallments || 0,
+        status: (g.sipstatus === 1 ? 'active' : g.sipstatus === 0 ? 'paused' : 'completed') as Goal['status'],
+        lastSipDate: g.lastSipDate || g.startDate || '',
+        createdAt: g.createdAt || ''
+      })));
+      this.activeCount = res.kpis?.activeGoals || 0;
+      this.goldCount = res.kpis?.goldGoals || 0;
+      this.totalTarget = res.kpis?.totalTargetValue || 0;
+    });
+  }
 
   exportCols = [
     { key: 'id', label: 'ID' }, { key: 'userName', label: 'User' }, { key: 'userMobile', label: 'Mobile' },

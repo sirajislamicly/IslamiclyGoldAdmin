@@ -1,8 +1,10 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../shared/components/export-button/export-button.component';
+import { ApiService } from '../../core/services/api.service';
+import { forkJoin } from 'rxjs';
 
 interface VaultCustomer {
   id: number;
@@ -288,14 +290,38 @@ export class VaultComponent implements OnInit {
     { key: 'kycStatus', label: 'KYC' }, { key: 'state', label: 'State' }
   ];
 
+  private api = inject(ApiService);
+
   ngOnInit(): void {
-    const data = this.generateCustomers();
-    this.customers.set(data);
-    this.totalGold = data.reduce((s, c) => s + c.goldBalance, 0);
-    this.totalSilver = data.reduce((s, c) => s + c.silverBalance, 0);
-    this.totalGoldValue = data.reduce((s, c) => s + c.goldValue, 0);
-    this.totalSilverValue = data.reduce((s, c) => s + c.silverValue, 0);
-    this.totalVaultValue = this.totalGoldValue + this.totalSilverValue;
+    forkJoin({
+      summary: this.api.vaultSummary(),
+      holdings: this.api.vaultCustomerHoldings({ pageSize: 200 })
+    }).subscribe({
+      next: (res) => {
+        this.totalGold = res.summary.totalGoldGrams || 0;
+        this.totalSilver = res.summary.totalSilverGrams || 0;
+        this.totalGoldValue = res.summary.totalGoldValue || 0;
+        this.totalSilverValue = res.summary.totalSilverValue || 0;
+        this.totalVaultValue = res.summary.totalVaultValue || 0;
+        const data: VaultCustomer[] = (res.holdings || []).map((c: any) => ({
+          id: c.id,
+          userName: c.userName || 'Unknown',
+          mobileNumber: c.mobileNumber || '',
+          uniqueId: c.uniqueId || '',
+          goldBalance: c.goldBalance || 0,
+          silverBalance: c.silverBalance || 0,
+          goldValue: c.goldValue || 0,
+          silverValue: c.silverValue || 0,
+          totalValue: c.totalValue || 0,
+          totalBuyTxns: c.totalBuyTxns || 0,
+          totalSellTxns: c.totalSellTxns || 0,
+          lastTxnDate: c.lastTxnDate || '',
+          kycStatus: (c.kycStatus || 'pending') as VaultCustomer['kycStatus'],
+          state: c.userState || '-'
+        }));
+        this.customers.set(data);
+      }
+    });
   }
 
   filtered = computed(() => {

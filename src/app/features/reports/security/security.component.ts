@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-security-report',
@@ -61,28 +63,44 @@ import { ReportHeaderComponent } from '../../../shared/components/report-header/
   `
 })
 export class SecurityComponent implements OnInit {
+  private api = inject(ApiService);
   otpGenerated=0; otpVerified=0; failedAttempts=0; expiredOtps=0; verifyRate=0; failRate=0; expireRate=0;
   augOtpGen=0; glOtpGen=0;
   sessions: {id:number;userAgent:string;ipAddress:string;createdAt:string;expiresAt:string;isActive:boolean}[] = [];
 
   ngOnInit() {
-    this.otpGenerated = 2800 + Math.floor(Math.random() * 500);
-    this.otpVerified = Math.floor(this.otpGenerated * 0.82);
-    this.failedAttempts = Math.floor(this.otpGenerated * 0.08);
-    this.expiredOtps = this.otpGenerated - this.otpVerified - this.failedAttempts;
-    this.verifyRate = Math.round((this.otpVerified / this.otpGenerated) * 100);
-    this.failRate = Math.round((this.failedAttempts / this.otpGenerated) * 100);
-    this.expireRate = 100 - this.verifyRate - this.failRate;
-    this.augOtpGen = Math.floor(this.otpGenerated * 0.65);
-    this.glOtpGen = this.otpGenerated - this.augOtpGen;
-    const agents = ['Dart/3.11 (dart:io)', 'Mozilla/5.0 (iPhone)', 'Mozilla/5.0 (Android)', 'okhttp/4.12.0', 'PostmanRuntime/7.36'];
-    this.sessions = Array.from({length: 15}, (_, i) => ({
-      id: 18000 + i, userAgent: agents[Math.floor(Math.random() * agents.length)],
-      ipAddress: `${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`,
-      createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString(),
-      expiresAt: new Date(Date.now() + Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString(),
-      isActive: Math.random() > 0.3
-    }));
+    forkJoin({
+      otp: this.api.securityOtpKpis(),
+      sessions: this.api.securityActiveSessions(15)
+    }).subscribe({
+      next: (res) => {
+        const otp = res.otp || [];
+        const sessions = res.sessions || [];
+        const aug: any = otp.find((x: any) => x.platform === 'Aug') || {};
+        const gl: any = otp.find((x: any) => x.platform === 'GoldLite') || {};
+        this.augOtpGen = aug.generated || 0;
+        this.glOtpGen = gl.generated || 0;
+        this.otpGenerated = this.augOtpGen + this.glOtpGen;
+        this.otpVerified = (aug.verified || 0) + (gl.verified || 0);
+        this.failedAttempts = (aug.failed || 0) + (gl.failed || 0);
+        this.expiredOtps = (aug.expired || 0) + (gl.expired || 0);
+        const total = this.otpGenerated || 1;
+        this.verifyRate = Math.round((this.otpVerified / total) * 100);
+        this.failRate = Math.round((this.failedAttempts / total) * 100);
+        this.expireRate = 100 - this.verifyRate - this.failRate;
+        this.sessions = sessions.map((s: any) => ({
+          id: s.id,
+          userAgent: s.userAgent,
+          ipAddress: s.ipAddress,
+          createdAt: s.createdAtUtc,
+          expiresAt: s.expiresAtUtc,
+          isActive: !!s.isActive
+        }));
+      },
+      error: () => {
+        this.sessions = [];
+      }
+    });
   }
   fN(n:number){return new Intl.NumberFormat('en-IN').format(n);}
   fD(d:string){try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});}catch{return d;}}

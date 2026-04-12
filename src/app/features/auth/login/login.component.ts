@@ -40,16 +40,19 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
       <div class="card-glass w-full max-w-md relative z-10 animate-fade-in-up">
         <!-- Logo -->
         <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-500/20 animate-float" style="animation-duration: 4s;">
-            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.94s4.18 1.36 4.18 3.85c0 1.89-1.44 2.96-3.12 3.19z"/>
+          <div class="w-[72px] h-[72px] bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-500/25 animate-float ring-4 ring-amber-400/10" style="animation-duration: 4s;">
+            <svg class="w-9 h-9 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.83-3.13 9.37-7 10.75-3.87-1.38-7-5.92-7-10.75V6.3l7-3.12zM10 12l-2-2-1.41 1.41L10 14.82l7.41-7.41L16 6l-6 6z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-            Islamicly <span class="text-gradient-gold">GoldAdmin</span>
+          <h1 class="text-[26px] font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+            <span class="text-gradient-gold">Gold</span>Admin
           </h1>
-          <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">
-            {{ auth.otpSent() ? 'Enter the verification code' : 'Sign in to your admin account' }}
+          <p class="text-slate-400 dark:text-slate-500 text-[13px] mt-1.5 font-medium tracking-wide uppercase">
+            by Islamicly
+          </p>
+          <p class="text-slate-500 dark:text-slate-400 text-sm mt-3">
+            {{ auth.otpSent() ? 'Enter the verification code sent to your email' : 'Sign in to access your dashboard' }}
           </p>
         </div>
 
@@ -77,11 +80,11 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               <div class="relative">
                 <input type="email"
                        formControlName="email"
-                       class="input pl-10 py-3"
+                       class="input !pl-12 py-3"
                        placeholder="admin@islamicly.com"
                        [class.border-red-400]="emailForm.controls.email.touched && emailForm.controls.email.invalid" />
-                <svg class="w-[18px] h-[18px] text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+                <svg class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
                 </svg>
               </div>
               @if (emailForm.controls.email.touched && emailForm.controls.email.hasError('email')) {
@@ -99,7 +102,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 </svg>
                 Sending OTP...
               } @else {
-                Continue
+                Send Verification Code
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
               }
             </button>
@@ -175,8 +178,12 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
         }
 
         <div class="mt-8 pt-5 border-t border-slate-200/40 dark:border-slate-700/40">
-          <p class="text-[11px] text-center text-slate-400">
-            Secure OTP authentication via SendGrid. For demo, use any 6-digit code.
+          <div class="flex items-center justify-center gap-1.5 mb-1.5">
+            <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
+            <span class="text-[11px] text-slate-400 font-medium">Secured with OTP verification</span>
+          </div>
+          <p class="text-[10px] text-center text-slate-400/70">
+            &copy; {{ currentYear }} Islamicly. All rights reserved.
           </p>
         </div>
       </div>
@@ -189,6 +196,7 @@ export class LoginComponent implements OnDestroy {
   private router = inject(Router);
   private toast = inject(ToastService);
 
+  currentYear = new Date().getFullYear();
   showConfetti = signal(false);
   confettiPieces = Array.from({ length: 50 }, (_, i) => ({
     id: i,

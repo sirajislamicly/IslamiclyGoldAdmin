@@ -1,9 +1,11 @@
-import { Component, OnInit, computed } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
+import { ApiService } from '../../../core/services/api.service';
 
 interface BankEntry { id:number; uid:number; userName:string; bankAccount:string; ifscCode:string; bankName:string; isActive:number; type:number; upiDetails:string|null; accountName:string; ts:string; }
 
@@ -46,14 +48,32 @@ interface BankEntry { id:number; uid:number; userName:string; bankAccount:string
   `
 })
 export class BankAccountsComponent implements OnInit {
+  private api = inject(ApiService);
   allData: BankEntry[] = []; search=''; typeFilter=''; page=1; pageSize=20; Math=Math;
   active=0; bankType=0; upiType=0; topBanks:{name:string;count:number;pct:number}[]=[];
   ngOnInit() {
-    this.allData = this.gen(); this.active = this.allData.filter(b => b.isActive).length;
-    this.bankType = this.allData.filter(b => b.type === 1).length; this.upiType = this.allData.filter(b => b.type === 2).length;
-    const bankMap = new Map<string,number>(); this.allData.forEach(b => bankMap.set(b.bankName, (bankMap.get(b.bankName)||0)+1));
-    const sorted = Array.from(bankMap.entries()).sort((a,b) => b[1]-a[1]).slice(0,8);
-    this.topBanks = sorted.map(([name,count]) => ({name, count, pct: Math.round((count/this.allData.length)*100)}));
+    forkJoin({
+      kpis: this.api.bankAccountsKpis(),
+      list: this.api.bankAccountsList({ pageSize: 200 }),
+      topBanks: this.api.bankAccountsTopBanks(10)
+    }).subscribe({
+      next: (res) => {
+        this.allData = (res.list || []) as BankEntry[];
+        const kpis = res.kpis || {};
+        this.active = kpis.activeAccounts || 0;
+        this.bankType = kpis.bankTransfer || 0;
+        this.upiType = kpis.upiLinked || 0;
+        this.topBanks = (res.topBanks || []).map((b: any) => ({
+          name: b.bankName || 'Unknown',
+          count: b.accountCount,
+          pct: Math.round(b.percentage)
+        }));
+      },
+      error: () => {
+        this.allData = [];
+        this.topBanks = [];
+      }
+    });
   }
   fil = computed(() => { let d = this.allData; const q = this.search.toLowerCase();
     if (q) d = d.filter(b => b.accountName.toLowerCase().includes(q) || b.bankName.toLowerCase().includes(q) || b.ifscCode.toLowerCase().includes(q));

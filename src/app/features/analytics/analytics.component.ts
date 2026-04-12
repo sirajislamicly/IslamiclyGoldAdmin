@@ -1,7 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { ApiService } from '../../core/services/api.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-analytics',
@@ -109,29 +110,57 @@ import { MockDataService } from '../../core/services/mock-data.service';
   `
 })
 export class AnalyticsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
   months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  revenue: number[] = [];
-  users: number[] = [];
-  metalBars: { gold: number; silver: number }[] = [];
+  revenue: number[] = this.months.map(() => 0);
+  users: number[] = this.months.map(() => 0);
+  metalBars: { gold: number; silver: number }[] = this.months.map(() => ({ gold: 0, silver: 0 }));
   totalRevenue = 0; totalUsers = 0; avgTxn = 0; activeSIPs = 0;
   quickStats: { label: string; value: string; color: string; icon: string; iconBg: string }[] = [];
 
   ngOnInit(): void {
-    const stats = this.mockData.getDashboardStats();
-    this.totalRevenue = stats.totalBuyValue;
-    this.totalUsers = stats.totalUsers;
-    this.avgTxn = Math.round(stats.totalBuyValue / (stats.totalBuyTransactions || 1));
-    this.activeSIPs = stats.activeSIPs;
-    this.revenue = this.months.map(() => 30 + Math.random() * 60);
-    this.users = this.months.map(() => 25 + Math.random() * 65);
-    this.metalBars = this.months.map(() => ({ gold: 20 + Math.random() * 60, silver: 10 + Math.random() * 50 }));
-    this.quickStats = [
-      { label: 'Gold Buys', value: this.fN(stats.goldBuys), color: 'text-amber-600', icon: 'Au', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' },
-      { label: 'Silver Buys', value: this.fN(stats.silverBuys), color: 'text-slate-600 dark:text-slate-300', icon: 'Ag', iconBg: 'bg-slate-100 text-slate-600 dark:bg-slate-700' },
-      { label: 'SIP Success', value: this.fN(stats.sipSuccess), color: 'text-emerald-600', icon: '+', iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' },
-      { label: 'Pending KYC', value: this.fN(stats.pendingKyc), color: 'text-amber-600', icon: 'K', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' },
-    ];
+    forkJoin({
+      kpis: this.api.dashboardKpis(),
+      userGrowth: this.api.analyticsUserGrowth(),
+      metalTrend: this.api.analyticsMetalTrend()
+    }).subscribe(res => {
+      const stats = res.kpis;
+      this.totalRevenue = stats.totalBuyValue || 0;
+      this.totalUsers = stats.totalUsers || 0;
+      this.avgTxn = stats.totalBuyTransactions ? Math.round(stats.totalBuyValue / stats.totalBuyTransactions) : 0;
+      this.activeSIPs = stats.activeSIPs || 0;
+
+      // Scale user growth to 0-100
+      const ugMax = Math.max(...(res.userGrowth || []).map((u: any) => u.newUsers || 0), 1);
+      this.users = this.months.map((_, i) => {
+        const row = (res.userGrowth || []).find((u: any) => u.monthNum === i + 1);
+        return row ? ((row.newUsers || 0) / ugMax) * 100 : 0;
+      });
+
+      // Scale metal trend
+      const mtMaxGold = Math.max(...(res.metalTrend || []).map((m: any) => m.goldVolume || 0), 1);
+      const mtMaxSilver = Math.max(...(res.metalTrend || []).map((m: any) => m.silverVolume || 0), 1);
+      this.metalBars = this.months.map((_, i) => {
+        const row = (res.metalTrend || []).find((m: any) => m.monthNum === i + 1);
+        return {
+          gold: row ? ((row.goldVolume || 0) / mtMaxGold) * 100 : 0,
+          silver: row ? ((row.silverVolume || 0) / mtMaxSilver) * 100 : 0
+        };
+      });
+      // Revenue chart uses gold+silver combined
+      const revMax = Math.max(...(res.metalTrend || []).map((m: any) => (m.goldVolume || 0) + (m.silverVolume || 0)), 1);
+      this.revenue = this.months.map((_, i) => {
+        const row = (res.metalTrend || []).find((m: any) => m.monthNum === i + 1);
+        return row ? (((row.goldVolume || 0) + (row.silverVolume || 0)) / revMax) * 100 : 0;
+      });
+
+      this.quickStats = [
+        { label: 'Gold Buys', value: this.fN(stats.goldBuys || 0), color: 'text-amber-600', icon: 'Au', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' },
+        { label: 'Silver Buys', value: this.fN(stats.silverBuys || 0), color: 'text-slate-600 dark:text-slate-300', icon: 'Ag', iconBg: 'bg-slate-100 text-slate-600 dark:bg-slate-700' },
+        { label: 'SIP Success', value: this.fN(stats.sipSuccess || 0), color: 'text-emerald-600', icon: '+', iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' },
+        { label: 'Pending KYC', value: this.fN(stats.pendingKyc || 0), color: 'text-amber-600', icon: 'K', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' },
+      ];
+    });
   }
   fN(n: number) { return new Intl.NumberFormat('en-IN').format(n); }
   fC(n: number) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n); }

@@ -4,8 +4,9 @@ import { RouterLink } from '@angular/router';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { DateRangeFilterComponent } from '../../shared/components/date-range-filter/date-range-filter.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { forkJoin } from 'rxjs';
 
 interface Activity { user: string; action: string; time: string; type: string; }
 
@@ -255,50 +256,94 @@ interface Activity { user: string; action: string; time: string; type: string; }
 })
 export class DashboardComponent implements OnInit {
   loading = signal(true);
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
   private auth = inject(AuthService);
 
   greeting = '';
   userName = '';
 
-  stats!: ReturnType<MockDataService['getDashboardStats']>;
+  stats: any = {
+    totalUsers: 0, totalGoals: 0, totalBuyTransactions: 0, totalSellTransactions: 0,
+    totalRedeemRequests: 0, sipSuccess: 0, sipFailed: 0, nominationsCreated: 0,
+    totalBuyValue: 0, totalSellValue: 0, activeUsers: 0, activeSIPs: 0,
+    goldBuys: 0, silverBuys: 0
+  };
   rateCards: { label: string; value: string; color: string }[] = [];
 
   months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  bars: { gold: number; silver: number }[] = [];
+  bars: { gold: number; silver: number }[] = this.months.map(() => ({ gold: 0, silver: 0 }));
   goldPct = 0;
   silverPct = 0;
 
-  activity: Activity[] = [
-    { user: 'Swaroop K.', action: 'bought 1.96g silver', time: '2 min ago', type: 'buy' },
-    { user: 'Jagdish D.', action: 'bought 500 INR gold', time: '14 min ago', type: 'buy' },
-    { user: 'Mohd Irfan', action: 'sold 0.25g gold', time: '1 hr ago', type: 'sell' },
-    { user: 'Sandeep K.', action: 'completed KYC', time: '2 hr ago', type: 'kyc' },
-    { user: 'Ayesha N.', action: 'created goal "Marriage"', time: '3 hr ago', type: 'goal' },
-    { user: 'Omar R.', action: 'ordered 10g Gold Coin', time: '5 hr ago', type: 'buy' },
-    { user: 'Fatima S.', action: 'started SIP 481/week', time: '6 hr ago', type: 'buy' },
-  ];
+  activity: Activity[] = [];
 
   ngOnInit(): void {
-    // Greeting
     const hour = new Date().getHours();
     this.greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     this.userName = this.auth.currentUser()?.name?.split(' ')[0] || 'Admin';
 
-    // Simulate loading
-    setTimeout(() => this.loading.set(false), 800);
-    this.stats = this.mockData.getDashboardStats();
-    const rates = this.mockData.getCurrentRates();
-    this.rateCards = [
-      { label: 'Gold Buy', value: rates.gBuy, color: 'text-amber-600' },
-      { label: 'Gold Sell', value: rates.gSell, color: 'text-amber-500' },
-      { label: 'Silver Buy', value: rates.sBuy, color: 'text-slate-600 dark:text-slate-300' },
-      { label: 'Silver Sell', value: rates.sSell, color: 'text-slate-500' },
-      { label: 'Gold GST', value: rates.gBuyGst, color: 'text-slate-400' },
-    ];
-    this.bars = this.months.map(() => ({ gold: 20 + Math.random() * 70, silver: 10 + Math.random() * 60 }));
-    this.goldPct = (this.stats.goldBuys / this.stats.totalBuyTransactions) * 100;
-    this.silverPct = (this.stats.silverBuys / this.stats.totalBuyTransactions) * 100;
+    forkJoin({
+      kpis: this.api.dashboardKpis(),
+      rates: this.api.dashboardLiveRates(),
+      trend: this.api.dashboardTransactionTrend(),
+      activity: this.api.dashboardRecentActivity(8)
+    }).subscribe({
+      next: (res) => {
+        this.stats = res.kpis;
+        // Parse rates from jsonOutput field
+        try {
+          const rateJson = JSON.parse(res.rates.jsonOutput);
+          const r = rateJson.result.data.rates;
+          this.rateCards = [
+            { label: 'Gold Buy', value: r.gBuy, color: 'text-amber-600' },
+            { label: 'Gold Sell', value: r.gSell, color: 'text-amber-500' },
+            { label: 'Silver Buy', value: r.sBuy, color: 'text-slate-600 dark:text-slate-300' },
+            { label: 'Silver Sell', value: r.sSell, color: 'text-slate-500' },
+            { label: 'Gold GST', value: r.gBuyGst, color: 'text-slate-400' },
+          ];
+        } catch { /* noop */ }
+
+        // Build monthly bars from API trend (scale to 0-100)
+        const maxGold = Math.max(...res.trend.map((t: any) => t.goldVolume || 0), 1);
+        const maxSilver = Math.max(...res.trend.map((t: any) => t.silverVolume || 0), 1);
+        this.bars = this.months.map((_, i) => {
+          const row = res.trend.find((t: any) => t.monthNum === i + 1);
+          return {
+            gold: row ? ((row.goldVolume || 0) / maxGold) * 100 : 0,
+            silver: row ? ((row.silverVolume || 0) / maxSilver) * 100 : 0
+          };
+        });
+
+        // Metal split donut
+        const totalBuys = this.stats.totalBuyTransactions || 1;
+        this.goldPct = (this.stats.goldBuys / totalBuys) * 100;
+        this.silverPct = (this.stats.silverBuys / totalBuys) * 100;
+
+        // Activity feed
+        this.activity = (res.activity || []).map((a: any) => ({
+          user: a.userName,
+          action: a.action,
+          time: this.timeAgo(a.activityTime),
+          type: a.activityType
+        }));
+
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  private timeAgo(iso: string): string {
+    try {
+      const diff = Date.now() - new Date(iso).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return m + ' min ago';
+      const h = Math.floor(m / 60);
+      if (h < 24) return h + ' hr ago';
+      const d = Math.floor(h / 24);
+      return d + ' day ago';
+    } catch { return iso; }
   }
 
   onDateChange(range: { from: string; to: string }): void {}

@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-revenue-report',
@@ -54,30 +55,48 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class RevenueComponent implements OnInit {
-  private mock = inject(MockDataService);
+  private api = inject(ApiService);
   totalBuyRev=0; totalSellPay=0; gstCollected=0; spreadRev=0;
   goldBuyVol=0; goldSellVol=0; silverBuyVol=0; silverSellVol=0;
   goldGst=0; silverGst=0; goldSpread=0; silverSpread=0;
   monthlyData: {month:string;buyPct:number;gstPct:number}[] = [];
 
   ngOnInit() {
-    const buys = this.mock.getBuyTransactions(500);
-    const sells = this.mock.getSellTransactions(200);
-    this.goldBuyVol = buys.filter(b => b.metalType === 'gold').reduce((s, b) => s + b.totalAmount, 0);
-    this.silverBuyVol = buys.filter(b => b.metalType === 'silver').reduce((s, b) => s + b.totalAmount, 0);
-    this.goldSellVol = sells.filter(s => s.metalType === 'gold').reduce((a, s) => a + s.totalAmount, 0);
-    this.silverSellVol = sells.filter(s => s.metalType === 'silver').reduce((a, s) => a + s.totalAmount, 0);
-    this.totalBuyRev = this.goldBuyVol + this.silverBuyVol;
-    this.totalSellPay = this.goldSellVol + this.silverSellVol;
-    this.goldGst = Math.round(this.goldBuyVol * 0.03);
-    this.silverGst = Math.round(this.silverBuyVol * 0.03);
-    this.gstCollected = this.goldGst + this.silverGst;
-    this.goldSpread = Math.round((this.goldBuyVol - this.goldSellVol) * 0.04);
-    this.silverSpread = Math.round((this.silverBuyVol - this.silverSellVol) * 0.04);
-    this.spreadRev = this.goldSpread + this.silverSpread;
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const maxBuy = this.totalBuyRev / 8;
-    this.monthlyData = months.map(m => ({ month: m, buyPct: 20 + Math.random() * 70, gstPct: 10 + Math.random() * 40 }));
+    forkJoin({
+      summary: this.api.revenueSummary(),
+      trend: this.api.revenueMonthlyTrend()
+    }).subscribe({
+      next: (res) => {
+        const s = res.summary || {};
+        const trend = res.trend || [];
+        this.totalBuyRev = s.totalBuyRevenue || 0;
+        this.totalSellPay = s.totalSellPayout || 0;
+        this.gstCollected = s.totalGSTCollected || 0;
+        this.goldBuyVol = s.goldBuyVolume || 0;
+        this.goldSellVol = s.goldSellVolume || 0;
+        this.silverBuyVol = s.silverBuyVolume || 0;
+        this.silverSellVol = s.silverSellVolume || 0;
+        this.goldGst = s.goldGSTCollected || 0;
+        this.silverGst = s.silverGSTCollected || 0;
+        this.goldSpread = Math.round((this.goldBuyVol - this.goldSellVol) * 0.04);
+        this.silverSpread = Math.round((this.silverBuyVol - this.silverSellVol) * 0.04);
+        this.spreadRev = Math.round((this.totalBuyRev - this.totalSellPay) * 0.04);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const maxBuy = Math.max(...trend.map((t: any) => t.buyRevenue), 1);
+        const maxGst = Math.max(...trend.map((t: any) => t.gstCollected), 1);
+        this.monthlyData = months.map((m, i) => {
+          const row = trend.find((t: any) => t.monthNum === i + 1);
+          return {
+            month: m,
+            buyPct: row ? (row.buyRevenue / maxBuy) * 100 : 0,
+            gstPct: row ? (row.gstCollected / maxGst) * 100 : 0
+          };
+        });
+      },
+      error: () => {
+        this.monthlyData = [];
+      }
+    });
   }
   fC(n: number) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n); }
 }

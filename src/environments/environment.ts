@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://api.islamicly.gold/admin'
+  apiUrl: 'https://goldadminapi.islamicly.com/api'
 };

@@ -1,11 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { DateRangeFilterComponent } from '../../../shared/components/date-range-filter/date-range-filter.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 import { AugUser } from '../../../models/user.model';
 
 @Component({
@@ -59,9 +60,9 @@ import { AugUser } from '../../../models/user.model';
   `
 })
 export class UserReportsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
 
-  users: AugUser[] = [];
+  users: any[] = [];
   tableData: Record<string, any>[] = [];
   totalUsers = 0;
   approvedUsers = 0;
@@ -83,32 +84,37 @@ export class UserReportsComponent implements OnInit {
   exportColumns = this.columns.map(c => ({ key: c.key, label: c.label }));
 
   ngOnInit(): void {
-    this.users = this.mockData.getUsers(200);
-    this.totalUsers = this.users.length;
-    this.approvedUsers = this.users.filter(u => u.kycStatus === 'approved').length;
-    this.pendingUsers = this.users.filter(u => u.kycStatus === 'pending').length;
+    forkJoin({
+      kpis: this.api.usersKpis(),
+      list: this.api.usersList({ pageSize: 200 })
+    }).subscribe({
+      next: (res) => {
+        this.users = res.list || [];
+        const kpis = res.kpis || {};
+        this.totalUsers = kpis.totalUsers || 0;
+        this.approvedUsers = kpis.approved || 0;
+        this.pendingUsers = kpis.pending || 0;
+        this.newUsersThisMonth = kpis.newThisMonth || 0;
 
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-    this.newUsersThisMonth = this.users.filter(u => {
-      const d = new Date(u.createdAt);
-      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-    }).length;
+        // Build growth chart data (last 12 months)
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const counts = months.map((_, i) => {
+          return this.users.filter((u: any) => new Date(u.createdAt).getMonth() === i).length;
+        });
+        const maxCount = Math.max(...counts, 1);
+        this.userGrowth = months.map((label, i) => ({
+          label,
+          count: counts[i],
+          pct: (counts[i] / maxCount) * 100
+        }));
 
-    // Build growth chart data (last 12 months)
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const counts = months.map((_, i) => {
-      return this.users.filter(u => new Date(u.createdAt).getMonth() === i).length;
+        this.tableData = this.users.map((u: any) => ({ ...u, panNumber: u.pannumber }));
+      },
+      error: () => {
+        this.users = [];
+        this.tableData = [];
+      }
     });
-    const maxCount = Math.max(...counts, 1);
-    this.userGrowth = months.map((label, i) => ({
-      label,
-      count: counts[i],
-      pct: (counts[i] / maxCount) * 100
-    }));
-
-    this.tableData = this.users.map(u => ({ ...u }));
   }
 
   onDateChange(range: { from: string; to: string }): void {

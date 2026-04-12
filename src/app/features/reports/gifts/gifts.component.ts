@@ -1,10 +1,11 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-gifts-report',
@@ -46,15 +47,32 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class GiftsComponent implements OnInit {
-  private mock = inject(MockDataService);
+  private api = inject(ApiService);
   allData: any[] = []; search=''; claimFilter=''; metalFilter=''; page=1; pageSize=20; Math=Math;
   claimed=0; unclaimed=0; totalValue=0;
 
   ngOnInit() {
-    this.allData = this.mock.getGifts(80);
-    this.claimed = this.allData.filter(g => g.isClaimed).length;
-    this.unclaimed = this.allData.length - this.claimed;
-    this.totalValue = this.allData.reduce((s: number, g: any) => s + g.amount, 0);
+    forkJoin({
+      kpis: this.api.giftsKpis(),
+      list: this.api.giftsList({ pageSize: 100 })
+    }).subscribe({
+      next: (res) => {
+        const list = res.list || [];
+        this.allData = list.map((g: any) => ({
+          ...g,
+          senderUID: g.senderuid,
+          receiverUID: g.receiveruid,
+          isClaimed: g.isclaimed
+        }));
+        const kpis = res.kpis || {};
+        this.claimed = kpis.claimed || 0;
+        this.unclaimed = kpis.unclaimed || 0;
+        this.totalValue = kpis.totalGiftValue || 0;
+      },
+      error: () => {
+        this.allData = [];
+      }
+    });
   }
 
   fil = computed(() => { let d = this.allData; const q = this.search.toLowerCase();

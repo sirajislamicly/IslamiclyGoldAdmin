@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, of, tap, delay } from 'rxjs';
+import { Observable, of, tap, delay, catchError, throwError, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface AdminUser {
   id: string;
@@ -25,6 +26,7 @@ export interface VerifyOtpResponse {
 const TOKEN_KEY = 'gold_admin_token';
 const USER_KEY = 'gold_admin_user';
 const OTP_SENT_KEY = 'gold_admin_otp_sent';
+const EMAIL_KEY = 'gold_admin_email';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -41,19 +43,20 @@ export class AuthService {
     this.loading.set(true);
     this.error.set('');
 
-    // Mock OTP sending - in production, this calls SendGrid API
+    // Mock OTP sending - real OTP flow to be implemented later
     return of({
       success: true,
       message: 'OTP sent successfully to ' + email,
       expiresIn: 300
     }).pipe(
-      delay(800),
+      delay(600),
       tap(res => {
         this.loading.set(false);
         if (res.success) {
           this.otpSent.set(true);
           this.otpEmail.set(email);
           localStorage.setItem(OTP_SENT_KEY, Date.now().toString());
+          localStorage.setItem(EMAIL_KEY, email);
         }
       })
     );
@@ -63,7 +66,9 @@ export class AuthService {
     this.loading.set(true);
     this.error.set('');
 
-    // Mock OTP verification - accepts any 6-digit code for demo
+    // Currently the backend uses a simple password-based login ("123")
+    // Once email+OTP is implemented on the backend we'll switch.
+    // For now, any 6-digit OTP triggers the login API with password=123.
     const isValid = otp.length === 6 && /^\d{6}$/.test(otp);
 
     if (!isValid) {
@@ -72,17 +77,15 @@ export class AuthService {
       return of({ success: false, token: '', user: {} as AdminUser });
     }
 
-    return of({
-      success: true,
-      token: 'jwt-' + btoa(email + ':' + Date.now()),
-      user: {
-        id: '1',
-        name: 'Gold Admin',
-        email,
-        role: 'administrator'
-      }
-    }).pipe(
-      delay(600),
+    return this.http.post<{ message: string; token: string }>(
+      `${environment.apiUrl}/Home/login?password=123`,
+      null
+    ).pipe(
+      map(res => {
+        const user: AdminUser = { id: '1', name: 'Gold Admin', email, role: 'administrator' };
+        const result: VerifyOtpResponse = { success: true, token: res.token, user };
+        return result;
+      }),
       tap(res => {
         this.loading.set(false);
         if (res.success) {
@@ -92,6 +95,11 @@ export class AuthService {
           this.otpSent.set(false);
           localStorage.removeItem(OTP_SENT_KEY);
         }
+      }),
+      catchError(err => {
+        this.loading.set(false);
+        this.error.set('Login failed. Please try again.');
+        return throwError(() => err);
       })
     );
   }
@@ -104,6 +112,7 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(OTP_SENT_KEY);
+    localStorage.removeItem(EMAIL_KEY);
     this.currentUser.set(null);
     this.otpSent.set(false);
     this.otpEmail.set('');

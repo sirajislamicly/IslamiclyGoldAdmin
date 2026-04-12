@@ -1,9 +1,11 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
+import { ApiService } from '../../../core/services/api.service';
 
 interface PGTransaction {
   id: number; orderId: string; txId: string | null; paymentStatus: string;
@@ -117,6 +119,7 @@ interface PGTransaction {
   `
 })
 export class PaymentGatewayComponent implements OnInit {
+  private api = inject(ApiService);
   allData: PGTransaction[] = [];
   search = ''; statusFilter = ''; gatewayFilter = ''; page = 1; pageSize = 20;
   captured = 0; failed = 0; pending = 0; successRate = 0; failRate = 0; pendingRate = 0;
@@ -129,14 +132,39 @@ export class PaymentGatewayComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.allData = this.generate();
-    this.captured = this.allData.filter(t => t.paymentStatus === 'captured').length;
-    this.failed = this.allData.filter(t => t.paymentStatus === 'failed').length;
-    this.pending = this.allData.filter(t => t.paymentStatus === 'pending').length;
-    const total = this.allData.length || 1;
-    this.successRate = Math.round((this.captured / total) * 100);
-    this.failRate = Math.round((this.failed / total) * 100);
-    this.pendingRate = 100 - this.successRate - this.failRate;
+    forkJoin({
+      kpis: this.api.paymentGatewayKpis(),
+      list: this.api.paymentGatewayList({ pageSize: 300 })
+    }).subscribe({
+      next: (res) => {
+        const list = res.list || [];
+        this.allData = list.map((t: any) => ({
+          id: t.id,
+          orderId: t.orderID,
+          txId: t.txID,
+          paymentStatus: t.paymentStatus,
+          paymentStatusTs: t.paymentStatusTs,
+          goldBuyStatus: t.goldBuyStatus,
+          amount: 0,
+          gateway: 'cashfree',
+          userName: 'User',
+          mobileNumber: '',
+          metalType: 'gold',
+          isManual: false,
+          notifiedCount: t.isNotifiedCount || 0
+        }));
+        this.captured = this.allData.filter(t => t.paymentStatus === 'captured').length;
+        this.failed = this.allData.filter(t => t.paymentStatus === 'failed').length;
+        this.pending = this.allData.filter(t => t.paymentStatus === 'pending').length;
+        const total = this.allData.length || 1;
+        this.successRate = Math.round((this.captured / total) * 100);
+        this.failRate = Math.round((this.failed / total) * 100);
+        this.pendingRate = 100 - this.successRate - this.failRate;
+      },
+      error: () => {
+        this.allData = [];
+      }
+    });
   }
 
   filtered = computed(() => {

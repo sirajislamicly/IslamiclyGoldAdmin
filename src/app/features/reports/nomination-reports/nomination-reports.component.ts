@@ -1,10 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-nomination-reports',
@@ -51,7 +52,7 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class NominationReportsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
 
   totalNominations = 0;
   uniqueUsers = 0;
@@ -73,28 +74,29 @@ export class NominationReportsComponent implements OnInit {
   exportColumns = this.columns.map(c => ({ key: c.key, label: c.label }));
 
   ngOnInit(): void {
-    const nominees = this.mockData.getNominees(80);
-    this.totalNominations = nominees.length;
-    this.uniqueUsers = new Set(nominees.map(n => n.uniqueId)).size;
-
-    const now = new Date();
-    this.thisMonth = nominees.filter(n => {
-      const d = new Date(n.ts);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length;
-
-    // Relation breakdown
-    const relMap = new Map<string, number>();
-    nominees.forEach(n => relMap.set(n.nomineeRelation, (relMap.get(n.nomineeRelation) || 0) + 1));
-    const sorted = Array.from(relMap.entries()).sort((a, b) => b[1] - a[1]);
-    this.topRelation = sorted[0]?.[0] || '-';
-    this.relationBreakdown = sorted.map(([name, count]) => ({
-      name,
-      count,
-      pct: (count / this.totalNominations) * 100
-    }));
-
-    this.tableData = nominees.map(n => ({ ...n }));
+    forkJoin({
+      kpis: this.api.nominationsKpis(),
+      list: this.api.nominationsList({ pageSize: 200 }),
+      breakdown: this.api.nominationsRelationBreakdown()
+    }).subscribe({
+      next: (res) => {
+        const kpis = res.kpis || {};
+        this.totalNominations = kpis.totalNominations || 0;
+        this.uniqueUsers = kpis.uniqueUsers || 0;
+        this.topRelation = kpis.topRelation || '-';
+        this.thisMonth = kpis.thisMonth || 0;
+        this.relationBreakdown = (res.breakdown || []).map((b: any) => ({
+          name: b.relation,
+          count: b.nomineeCount,
+          pct: b.percentage
+        }));
+        this.tableData = (res.list || []).map((n: any) => ({ ...n }));
+      },
+      error: () => {
+        this.tableData = [];
+        this.relationBreakdown = [];
+      }
+    });
   }
 
   formatNum(n: number): string { return new Intl.NumberFormat('en-IN').format(n); }

@@ -1,12 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { DateRangeFilterComponent } from '../../../shared/components/date-range-filter/date-range-filter.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-sip-reports',
@@ -102,7 +103,7 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class SipReportsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
 
   activeTab = 'SIP Plans';
   statusFilter = '';
@@ -142,33 +143,47 @@ export class SipReportsComponent implements OnInit {
   scheduleExportCols = this.scheduleColumns.map(c => ({ key: c.key, label: c.label }));
 
   ngOnInit(): void {
-    const sips = this.mockData.getSIPs(150);
-    const schedules = this.mockData.getSIPPaymentSchedules(800);
+    forkJoin({
+      kpis: this.api.sipKpis(),
+      plans: this.api.sipPlans({ pageSize: 200 }),
+      schedules: this.api.sipPaymentSchedules({ pageSize: 500 }),
+      freq: this.api.sipFrequencyBreakdown()
+    }).subscribe({
+      next: (res) => {
+        const kpis = res.kpis || {};
+        this.totalSIPs = kpis.totalSIPs || 0;
+        this.activeSIPs = kpis.activeSIPs || 0;
+        this.successPayments = kpis.successPayments || 0;
+        this.failedPayments = kpis.failedPayments || 0;
+        this.pendingPayments = kpis.pendingPayments || 0;
 
-    this.totalSIPs = sips.length;
-    this.activeSIPs = sips.filter(s => s.status === 1).length;
+        const totalWithStatus = this.successPayments + this.failedPayments + this.pendingPayments || 1;
+        this.successRate = Math.round((this.successPayments / totalWithStatus) * 100);
+        this.failedRate = Math.round((this.failedPayments / totalWithStatus) * 100);
+        this.pendingRate = 100 - this.successRate - this.failedRate;
 
-    this.successPayments = schedules.filter(s => s.paymentStatus === 'Success').length;
-    this.failedPayments = schedules.filter(s => s.paymentStatus === 'Failed').length;
-    this.pendingPayments = schedules.filter(s => s.paymentStatus === 'Pending').length;
+        this.freqBreakdown = (res.freq || []).map((f: any) => ({
+          name: f.frequency,
+          count: f.sipCount,
+          pct: Math.round(f.percentage)
+        }));
 
-    const totalWithStatus = this.successPayments + this.failedPayments + this.pendingPayments || 1;
-    this.successRate = Math.round((this.successPayments / totalWithStatus) * 100);
-    this.failedRate = Math.round((this.failedPayments / totalWithStatus) * 100);
-    this.pendingRate = 100 - this.successRate - this.failedRate;
-
-    // Frequency breakdown
-    const freqMap = new Map<string, number>();
-    sips.forEach(s => freqMap.set(s.sipFrequency, (freqMap.get(s.sipFrequency) || 0) + 1));
-    this.freqBreakdown = Array.from(freqMap.entries()).map(([name, count]) => ({
-      name,
-      count,
-      pct: Math.round((count / this.totalSIPs) * 100)
-    }));
-
-    this.sipData = sips.map(s => ({ ...s }));
-    this.allSchedules = schedules.map(s => ({ ...s }));
-    this.filteredSchedules = this.allSchedules;
+        this.sipData = (res.plans || []).map((p: any) => ({
+          ...p,
+          sipName: p.siP_Name,
+          sipAmount: p.siP_Amount,
+          sipFrequency: p.siP_Frequency
+        }));
+        this.allSchedules = (res.schedules || []).map((s: any) => ({ ...s }));
+        this.filteredSchedules = this.allSchedules;
+      },
+      error: () => {
+        this.sipData = [];
+        this.allSchedules = [];
+        this.filteredSchedules = [];
+        this.freqBreakdown = [];
+      }
+    });
   }
 
   filterSchedules(): void {

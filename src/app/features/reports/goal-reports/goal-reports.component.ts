@@ -1,10 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-goal-reports',
@@ -49,7 +50,7 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class GoalReportsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
 
   totalGoals = 0;
   goldGoals = 0;
@@ -71,22 +72,29 @@ export class GoalReportsComponent implements OnInit {
   exportColumns = this.columns.map(c => ({ key: c.key, label: c.label }));
 
   ngOnInit(): void {
-    const goals = this.mockData.getGoals(100);
-    this.totalGoals = goals.length;
-    this.goldGoals = goals.filter(g => g.metalType === 'gold').length;
-    this.silverGoals = goals.filter(g => g.metalType === 'silver').length;
-    this.totalValue = goals.reduce((sum, g) => sum + g.amount, 0);
-
-    // Group by goal type
-    const typeMap = new Map<string, number>();
-    goals.forEach(g => typeMap.set(g.goalName, (typeMap.get(g.goalName) || 0) + 1));
-    this.goalTypeStats = Array.from(typeMap.entries()).map(([name, count]) => ({
-      name,
-      count,
-      pct: (count / this.totalGoals) * 100
-    })).sort((a, b) => b.count - a.count);
-
-    this.tableData = goals.map(g => ({ ...g }));
+    forkJoin({
+      kpis: this.api.goalsKpis(),
+      list: this.api.goalsList({ pageSize: 200 }),
+      breakdown: this.api.goalsTypeBreakdown()
+    }).subscribe({
+      next: (res) => {
+        const kpis = res.kpis || {};
+        this.totalGoals = kpis.totalGoals || 0;
+        this.goldGoals = kpis.goldGoals || 0;
+        this.silverGoals = kpis.silverGoals || 0;
+        this.totalValue = kpis.totalTargetValue || 0;
+        this.goalTypeStats = (res.breakdown || []).map((b: any) => ({
+          name: b.goalName,
+          count: b.goalCount,
+          pct: b.percentage
+        }));
+        this.tableData = (res.list || []).map((g: any) => ({ ...g }));
+      },
+      error: () => {
+        this.tableData = [];
+        this.goalTypeStats = [];
+      }
+    });
   }
 
   formatNum(n: number): string { return new Intl.NumberFormat('en-IN').format(n); }

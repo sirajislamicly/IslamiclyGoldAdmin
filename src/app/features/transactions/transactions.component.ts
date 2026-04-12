@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../shared/components/export-button/export-button.component';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { ApiService } from '../../core/services/api.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-transactions',
@@ -98,18 +99,25 @@ import { MockDataService } from '../../core/services/mock-data.service';
   `
 })
 export class TransactionsComponent implements OnInit {
-  private mockData = inject(MockDataService);
+  private api = inject(ApiService);
   allBuys: any[] = []; allSells: any[] = [];
   tab = 'buy'; search = ''; metalFilter = ''; page = 1; pageSize = 20; Math = Math;
   buyCount = 0; sellCount = 0; buyVol = 0; sellVol = 0;
   expCols = [{ key: 'userName', label: 'User' }, { key: 'metalType', label: 'Metal' }, { key: 'quantity', label: 'Qty (g)' }, { key: 'rate', label: 'Rate' }, { key: 'totalAmount', label: 'Total' }, { key: 'transactionId', label: 'Txn ID' }];
 
   ngOnInit(): void {
-    this.allBuys = this.mockData.getBuyTransactions(500).map(b => ({ ...b }));
-    this.allSells = this.mockData.getSellTransactions(200).map(s => ({ ...s }));
-    this.buyCount = this.allBuys.length; this.sellCount = this.allSells.length;
-    this.buyVol = this.allBuys.reduce((s: number, b: any) => s + b.totalAmount, 0);
-    this.sellVol = this.allSells.reduce((s: number, b: any) => s + b.totalAmount, 0);
+    forkJoin({
+      kpis: this.api.transactionsKpis(),
+      buys: this.api.transactionsBuy({ pageSize: 500 }),
+      sells: this.api.transactionsSell({ pageSize: 200 })
+    }).subscribe(res => {
+      this.allBuys = (res.buys || []).map((b: any) => ({ ...b, ts: b.ts || b.createdAt }));
+      this.allSells = (res.sells || []).map((s: any) => ({ ...s }));
+      this.buyCount = res.kpis?.buyCount || this.allBuys.length;
+      this.sellCount = res.kpis?.sellCount || this.allSells.length;
+      this.buyVol = res.kpis?.buyVolume || 0;
+      this.sellVol = res.kpis?.sellVolume || 0;
+    });
   }
 
   filtered = computed(() => {

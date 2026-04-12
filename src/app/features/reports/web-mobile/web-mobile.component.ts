@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-web-mobile-report',
@@ -61,30 +61,31 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class WebMobileComponent implements OnInit {
-  private mock = inject(MockDataService);
+  private api = inject(ApiService);
   mobileTxns=0; webTxns=0; mobileVol=0; webVol=0; mobilePct=0; webPct=0;
   breakdown: {type:string;mobile:number;web:number;mobilePct:number}[] = [];
 
   ngOnInit() {
-    const buys = this.mock.getBuyTransactions(500);
-    const sells = this.mock.getSellTransactions(200);
-    const orders = this.mock.getOrders(100);
-    const all = [...buys.map(b => ({isWeb: b.isWeb, amount: b.totalAmount, type: 'Buy'})),
-                 ...sells.map(s => ({isWeb: s.isWeb, amount: s.totalAmount, type: 'Sell'})),
-                 ...orders.map(o => ({isWeb: o.isWeb, amount: o.rate, type: 'Order'}))];
-    this.mobileTxns = all.filter(t => !t.isWeb).length;
-    this.webTxns = all.filter(t => t.isWeb).length;
-    this.mobileVol = all.filter(t => !t.isWeb).reduce((s, t) => s + t.amount, 0);
-    this.webVol = all.filter(t => t.isWeb).reduce((s, t) => s + t.amount, 0);
-    const total = this.mobileTxns + this.webTxns || 1;
-    this.mobilePct = Math.round((this.mobileTxns / total) * 100);
-    this.webPct = 100 - this.mobilePct;
-    const types = ['Buy', 'Sell', 'Order'];
-    this.breakdown = types.map(type => {
-      const items = all.filter(t => t.type === type);
-      const mob = items.filter(t => !t.isWeb).length;
-      const web = items.filter(t => t.isWeb).length;
-      return { type, mobile: mob, web, mobilePct: Math.round((mob / (mob + web || 1)) * 100) };
+    this.api.webMobilePlatformSplit().subscribe({
+      next: (res) => {
+        const list = res || [];
+        this.mobileTxns = list.reduce((s: number, r: any) => s + (r.mobileCount || 0), 0);
+        this.webTxns = list.reduce((s: number, r: any) => s + (r.webCount || 0), 0);
+        this.mobileVol = list.reduce((s: number, r: any) => s + (r.mobileVolume || 0), 0);
+        this.webVol = list.reduce((s: number, r: any) => s + (r.webVolume || 0), 0);
+        const total = this.mobileTxns + this.webTxns || 1;
+        this.mobilePct = Math.round((this.mobileTxns / total) * 100);
+        this.webPct = 100 - this.mobilePct;
+        this.breakdown = list.map((r: any) => ({
+          type: r.transactionType,
+          mobile: r.mobileCount || 0,
+          web: r.webCount || 0,
+          mobilePct: Math.round(((r.mobileCount || 0) / ((r.mobileCount || 0) + (r.webCount || 0) || 1)) * 100)
+        }));
+      },
+      error: () => {
+        this.breakdown = [];
+      }
     });
   }
   fN(n:number){return new Intl.NumberFormat('en-IN').format(n);}

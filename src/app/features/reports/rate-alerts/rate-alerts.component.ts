@@ -1,10 +1,11 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-rate-alerts',
@@ -45,14 +46,30 @@ import { MockDataService } from '../../../core/services/mock-data.service';
   `
 })
 export class RateAlertsComponent implements OnInit {
-  private mock = inject(MockDataService);
+  private api = inject(ApiService);
   allData: any[] = []; metalFilter=''; notifFilter=''; page=1; pageSize=20; Math=Math;
   goldAlerts=0; silverAlerts=0; appNotif=0;
   ngOnInit() {
-    this.allData = this.mock.getRateAlerts(60);
-    this.goldAlerts = this.allData.filter((a: any) => a.metalType === 'GOLD').length;
-    this.silverAlerts = this.allData.filter((a: any) => a.metalType === 'SILVER').length;
-    this.appNotif = this.allData.filter((a: any) => a.appNotification).length;
+    forkJoin({
+      kpis: this.api.rateAlertsKpis(),
+      list: this.api.rateAlertsList({ pageSize: 100 })
+    }).subscribe({
+      next: (res) => {
+        const list = res.list || [];
+        this.allData = list.map((r: any) => ({
+          ...r,
+          rateId: r.rateid,
+          augUserId: r.auguserid
+        }));
+        const kpis = res.kpis || {};
+        this.goldAlerts = kpis.goldAlerts || 0;
+        this.silverAlerts = kpis.silverAlerts || 0;
+        this.appNotif = kpis.appNotifications || 0;
+      },
+      error: () => {
+        this.allData = [];
+      }
+    });
   }
   fil = computed(() => { let d = this.allData;
     if (this.metalFilter) d = d.filter((a: any) => a.metalType === this.metalFilter);

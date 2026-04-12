@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ApiService } from '../../../core/services/api.service';
 
 interface StateData { state:string; users:number; buyVol:number; sellVol:number; pct:number; }
 
@@ -51,33 +51,30 @@ interface StateData { state:string; users:number; buyVol:number; sellVol:number;
   `
 })
 export class GeographyComponent implements OnInit {
-  private mock = inject(MockDataService);
+  private api = inject(ApiService);
   stateData: StateData[] = []; topState=''; totalUsers=0; avgPerState=0; expD: Record<string,unknown>[] = [];
 
   ngOnInit() {
-    const users = this.mock.getUsers(200);
-    const buys = this.mock.getBuyTransactions(500);
-    this.totalUsers = users.length;
-    const stateMap = new Map<string,{users:number;buyVol:number;sellVol:number}>();
-    users.forEach(u => {
-      const s = u.userState || 'Unknown';
-      const cur = stateMap.get(s) || {users:0,buyVol:0,sellVol:0};
-      cur.users++;
-      stateMap.set(s, cur);
+    this.api.geographyStateWise().subscribe({
+      next: (res) => {
+        const list = res || [];
+        this.stateData = list.map((s: any) => ({
+          state: s.state,
+          users: s.userCount,
+          buyVol: s.buyVolume,
+          sellVol: s.sellVolume,
+          pct: Math.round(s.percentage)
+        }));
+        this.totalUsers = this.stateData.reduce((s, d) => s + d.users, 0);
+        this.topState = this.stateData[0]?.state || '-';
+        this.avgPerState = Math.round(this.totalUsers / (this.stateData.length || 1));
+        this.expD = this.stateData.map(s => ({ ...s }));
+      },
+      error: () => {
+        this.stateData = [];
+        this.expD = [];
+      }
     });
-    buys.forEach(b => {
-      const user = users.find(u => u.uniqueId === b.uniqueId);
-      const s = user?.userState || 'Unknown';
-      const cur = stateMap.get(s) || {users:0,buyVol:0,sellVol:0};
-      cur.buyVol += b.totalAmount;
-      stateMap.set(s, cur);
-    });
-    this.stateData = Array.from(stateMap.entries()).map(([state, d]) => ({
-      state, ...d, pct: Math.round((d.users / this.totalUsers) * 100)
-    })).sort((a, b) => b.users - a.users);
-    this.topState = this.stateData[0]?.state || '-';
-    this.avgPerState = Math.round(this.totalUsers / (this.stateData.length || 1));
-    this.expD = this.stateData.map(s => ({...s}));
   }
   fN(n:number){return new Intl.NumberFormat('en-IN').format(n);}
   fC(n:number){return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);}

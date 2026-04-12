@@ -1,9 +1,11 @@
-import { Component, OnInit, computed } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { ReportHeaderComponent } from '../../../shared/components/report-header/report-header.component';
+import { ApiService } from '../../../core/services/api.service';
 
 interface Order { id: number; orderId: string; userName: string; mobile: string; productName: string; sku: string; weight: number; metalType: string; rate: number; shipping: number; status: string; createdAt: string; }
 
@@ -57,20 +59,58 @@ interface Order { id: number; orderId: string; userName: string; mobile: string;
   `
 })
 export class OrdersDeliveryComponent implements OnInit {
+  private api = inject(ApiService);
   allData: Order[] = []; search=''; statusFilter=''; page=1; pageSize=20; Math=Math;
   delivered=0;shipped=0;cancelled=0;totalShipping=0;
   funnel:{label:string;count:number;pct:number;color:string}[]=[];
   eCols=[{key:'orderId',label:'Order ID'},{key:'userName',label:'User'},{key:'productName',label:'Product'},{key:'weight',label:'Weight(g)'},{key:'metalType',label:'Metal'},{key:'rate',label:'Rate'},{key:'shipping',label:'Shipping'},{key:'status',label:'Status'},{key:'createdAt',label:'Date'}];
 
   ngOnInit(){
-    this.allData=this.gen(); const t=this.allData.length||1;
-    this.delivered=this.allData.filter(o=>o.status==='Delivered').length;
-    this.shipped=this.allData.filter(o=>o.status==='Shipped').length;
-    this.cancelled=this.allData.filter(o=>o.status==='Cancelled').length;
-    this.totalShipping=this.allData.reduce((s,o)=>s+o.shipping,0);
-    const sts=['Generated','Confirmed','Shipped','Delivered','Cancelled'];
-    const colors=['bg-slate-500','bg-blue-500','bg-violet-500','bg-emerald-500','bg-red-500'];
-    this.funnel=sts.map((s,i)=>{const c=this.allData.filter(o=>o.status===s).length;return{label:s,count:c,pct:Math.round((c/t)*100),color:colors[i]};});
+    forkJoin({
+      kpis: this.api.ordersKpis(),
+      list: this.api.ordersList({ pageSize: 200 }),
+      funnel: this.api.ordersStatusFunnel()
+    }).subscribe({
+      next: (res) => {
+        const list = res.list || [];
+        this.allData = list.map((o: any) => ({
+          id: o.id,
+          orderId: o.orderId,
+          userName: o.userName || 'User',
+          mobile: o.mobileNumber || '',
+          productName: o.productName || '',
+          sku: o.productSKU || '',
+          weight: o.productWeight || 0,
+          metalType: o.metalType || 'gold',
+          rate: o.rate || 0,
+          shipping: o.shippingCharges || 0,
+          status: o.orderStatus || '',
+          createdAt: o.createdAt
+        }));
+        const kpis = res.kpis || {};
+        this.delivered = kpis.delivered || 0;
+        this.shipped = kpis.shipped || 0;
+        this.cancelled = kpis.cancelled || 0;
+        this.totalShipping = kpis.totalShippingCollected || 0;
+        const colors: Record<string, string> = {
+          Generated: 'bg-slate-500',
+          Confirmed: 'bg-blue-500',
+          Shipped: 'bg-violet-500',
+          Delivered: 'bg-emerald-500',
+          Cancelled: 'bg-red-500'
+        };
+        this.funnel = (res.funnel || []).map((f: any) => ({
+          label: f.orderStatus,
+          count: f.orderCount,
+          pct: Math.round(f.percentage),
+          color: colors[f.orderStatus] || 'bg-slate-500'
+        }));
+      },
+      error: () => {
+        this.allData = [];
+        this.funnel = [];
+      }
+    });
   }
 
   fil=computed(()=>{let d=this.allData;const q=this.search.toLowerCase();if(q)d=d.filter(o=>o.userName.toLowerCase().includes(q)||o.orderId.toLowerCase().includes(q)||o.productName.toLowerCase().includes(q));if(this.statusFilter)d=d.filter(o=>o.status===this.statusFilter);return d;});
